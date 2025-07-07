@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -20,12 +21,18 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
+
+
+    /**     * Handle user login.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function login(LoginRequest $request)
     {
         try {
             $loginResponse = $this->authService->login($request);
-            return response()->json($loginResponse->getData(),$loginResponse->getStatusCode());
-
+            return response()->json($loginResponse->getData(), $loginResponse->getStatusCode());
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
@@ -35,66 +42,79 @@ class AuthController extends Controller
         }
     }
 
+    /**     * Register a new user.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function register(RegisterRequest $request)
+    {
+        try {
+            $registerResponse = $this->authService->register($request);
+            return response()->json($registerResponse->getData(), $registerResponse->getStatusCode());
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Registration failed',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
 
-    // //
-    // public function register(Request $request)
-    // {
-    //     $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'email' => 'required|string|email|max:255|unique:users',
-    //         'password' => 'required|string|min:8',
-    //     ]);
+    /**     * Get the authenticated user.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function user(Request $request)
+    {
+        try {
+            $getUser = $this->authService->getUser($request);
+            return response()->json($getUser->getData());
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch user',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
 
-    //     $user = \App\Models\User::create([
-    //         'name' => $request->name,
-    //         'email' => $request->email,
-    //         'password' => bcrypt($request->password),
-    //     ]);
 
-    //     return response()->json(['message' => 'User registered successfully'], 201);
-    // }
+    /**     * Get Refresh Token
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refreshToken()
+    {
+        try {
+            $getRefreshToken = $this->authService->refreshToken();
+            return response()->json($getRefreshToken->getData());
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get refresh token',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
 
-    // public function login(Request $request)
-    // {
-    //     try {
-    //         //code...
-    //         $loginResponse = $this->authService->login($request);
-    //         if ($loginResponse instanceof \Illuminate\Http\JsonResponse) {
-    //             return $loginResponse; // Return the response from AuthService
-    //         }
-
-    //         // If login is successful, respond with token and user data
-    //         return $this->respondWithToken($loginResponse['token'], $loginResponse['user']);
-    //     } catch (\Throwable $th) {
-    //         //throw $th;
-    //     }
-    // }
-
-    // public function user(Request $request)
-    // {
-    //     return response()->json($request->user());
-    // }
-
-    // public function logout()
-    // {
-    //     auth::logout();
-    //     return response()->json(['message' => 'User logged out successfully']);
-    // }
-
-    // public function refreshToken()
-    // {
-    //     $user = Auth::user();
-    //     return $this->respondWithToken(Auth::refresh(),$user);
-    // }
-
-    // protected function respondWithToken($token,$user)
-    // {
-    //     return response()->json([
-    //         'user'        => $user,
-    //         'message'     => 'Token generated successfully',
-    //         'access_token' => $token,
-    //         'token_type'   => 'bearer',
-    //         'expires_in'   => auth()->factory()->getTTL() * 60,
-    //     ]);
-    // }
+    /**     * Handle user logout.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout()
+    {
+        try {
+            $logout = $this->authService->logout();
+            return response()->json($logout->getData());
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get refresh token',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
+    
 }
