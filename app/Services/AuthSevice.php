@@ -37,12 +37,12 @@ class AuthSevice
         // Check if user email exists
         $user = $this->authRepository->checkEmailExists($credentials['email']);
         if (!$user) {
-            return $this->responseHelper->fail('Unauthorized User not found', 404, null);
+            return $this->responseHelper->fail('Unauthorized User not found', null, 404);
         }
 
         // Check if password is correct
         if (!$accessToken = Auth::attempt($credentials)) {
-            return $this->responseHelper->fail('Unauthorized Email or Password', 401, null);
+            return $this->responseHelper->fail('Unauthorized Email or Password', null, 401);
         }
 
         // If the user is found and the password is correct, return the access token and user data
@@ -59,12 +59,12 @@ class AuthSevice
     {
         $user = $this->authRepository->createUser($registerRequest);
         if (!$user) {
-            return $this->responseHelper->fail('User registration failed', 500, null);
+            return $this->responseHelper->fail('User registration failed', null, 500);
         }
 
         // If the user is created successfully, return the user data and access token
 
-        return $this->responseHelper->success('User registered successfully', 201, $user);
+        return $this->responseHelper->success('User registered successfully', $user, 201);
     }
 
     /**
@@ -77,10 +77,10 @@ class AuthSevice
     {
         $user = Auth::user();
         if (!$user) {
-            return $this->responseHelper->fail('Unauthorized User not found', 404, null);
+            return $this->responseHelper->fail('Unauthorized User not found', null, 404);
         }
 
-        return $this->responseHelper->success('User retrieved successfully', 200, $user);
+        return $this->responseHelper->success('User retrieved successfully', $user, 200);
     }
 
     /**
@@ -102,16 +102,16 @@ class AuthSevice
     public function logout()
     {
         Auth::logout();
-        return $this->responseHelper->success('User logged out successfully', 200, null);
+        return $this->responseHelper->success('User logged out successfully',null, 200);
     }
 
     protected function respondWithToken($token, $user, $message = 'Login successful')
     {
-        return $this->responseHelper->success($message, 200, [
+        return $this->responseHelper->success($message, [
             'user' => $user,
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
-        ]);
+        ], 200);
     }
 }

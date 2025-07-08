@@ -12,7 +12,7 @@ class ResponseHelper
      * @param int $code
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function success($message = 'Success', $code = 200, $data = null, )
+    public static function success($message = 'Success', $data = null,  $code = 200)
     {
         return response()->json([
             'success' => true,
@@ -29,7 +29,7 @@ class ResponseHelper
      * @param mixed $errors
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function fail($message = 'Failed', $code = 400, $errors = null)
+    public static function fail($message = 'Failed', $errors = null, $code = 400)
     {
         return response()->json([
             'success' => false,
