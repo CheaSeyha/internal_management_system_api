@@ -11,9 +11,9 @@ use function Pest\Laravel\json;
 
 class AuthSevice
 {
-
     protected $authRepository;
     protected $responseHelper;
+
     /**
      * Create a new class instance.
      */
@@ -23,6 +23,7 @@ class AuthSevice
         $this->authRepository = $authRepository;
         $this->responseHelper = $responseHelper;
     }
+
     /**
      * Handle user login.
      *
@@ -47,6 +48,7 @@ class AuthSevice
         // If the user is found and the password is correct, return the access token and user data
         return $this->respondWithToken($accessToken, $user);
     }
+
     /**
      * Handle user registration.
      *
@@ -89,7 +91,7 @@ class AuthSevice
     public function refreshToken()
     {
         $user = Auth::user();
-        return $this->respondWithToken(auth()->refresh(), $user);
+        return $this->respondWithToken(auth()->refresh(), $user, 'Token refreshed successfully');
     }
 
     /**
@@ -99,24 +101,17 @@ class AuthSevice
      */
     public function logout()
     {
-        
         Auth::logout();
         return $this->responseHelper->success('User logged out successfully', 200, null);
     }
 
-
-    protected function respondWithToken($token, $user)
+    protected function respondWithToken($token, $user, $message = 'Login successful')
     {
-        return response()->json([
-            'success'      => true,
-            'message'      => 'Login successful',
-            'status'       => 200,
-            'data'         => [
-                'user'        => $user,
-                'access_token' => $token,
-                'token_type'   => 'bearer',
-                'expires_in'   => auth()->factory()->getTTL() * 60,
-            ]
+        return $this->responseHelper->success($message, 200, [
+            'user' => $user,
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth()->factory()->getTTL() * 60,
         ]);
     }
 }
