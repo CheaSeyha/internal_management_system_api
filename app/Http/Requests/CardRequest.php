@@ -25,11 +25,11 @@ class CardRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'card_type' => 'required|string|max:255',
+            'card_type' => 'required|string',
             'card_name' => 'required|string|max:255',
-            'block' => 'required|string|max:255',
+            'block' => 'required|string',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'sometimes|exists:users,id'
         ];
     }
 

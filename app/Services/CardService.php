@@ -3,29 +3,23 @@
 namespace App\Services;
 
 use App\Helper\ResponseHelper;
-use App\Models\Card;
 use App\Repository\CardRepository;
+use Illuminate\Support\Facades\Storage;
 
 class CardService
 {
     protected $cardRepository;
     protected $responseHelper;
-    /**
-     * Create a new class instance.
-     */
+
     public function __construct(CardRepository $cardRepository, ResponseHelper $responseHelper)
     {
-        //
         $this->cardRepository = $cardRepository;
         $this->responseHelper = $responseHelper;
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store($cardRequest)
+    public function store(array $data)
     {
-        $card = $this->cardRepository->store($cardRequest);
+        $card = $this->cardRepository->store($data);
         return $this->responseHelper->success('Card created successfully', $card, 201);
     }
 
@@ -38,24 +32,38 @@ class CardService
     public function getCardById($id)
     {
         $card = $this->cardRepository->getCardById($id);
-        if ($card) {
-            return $this->responseHelper->success('Card retrieved successfully', $card, 200);
-        }
-        return $this->responseHelper->fail('Card not found', null, 404);
+        return $card
+            ? $this->responseHelper->success('Card retrieved successfully', $card, 200)
+            : $this->responseHelper->fail('Card not found', null, 404);
     }
 
-    public function updateCard($id, $cardRequest)
+    public function getCardImageResponse($cardId)
     {
-        $card = $this->cardRepository->getCardById($id);
-        if (!$card) {
-            return $this->responseHelper->fail('Card not found', null, 404);
+        $imageData = $this->cardRepository->getCardImage($cardId);
+
+        if (!$imageData) {
+            return $this->responseHelper->fail('Image not found', null, 404);
         }
 
-        // Update the card with the new data
-        $this->cardRepository->updateCard($id, $cardRequest);
-        $updatedCard = $this->cardRepository->getCardById($id); // Fetch the updated card
-
-        return $this->responseHelper->success('Card updated successfully', $updatedCard, 200);
+        return response()->file(
+            Storage::disk('private')->path($imageData['path']),
+            ['Content-Type' => $imageData['mime_type']]
+        );
     }
 
+    public function updateCard($id, array $data)
+    {
+        $card = $this->cardRepository->updateCard($id, $data);
+        return $card
+            ? $this->responseHelper->success('Card updated successfully', $card, 200)
+            : $this->responseHelper->fail('Card not found', null, 404);
+    }
+
+    public function deleteCard($cardId)
+    {
+        $result = $this->cardRepository->deleteCard($cardId);
+        return $result
+            ? $this->responseHelper->success('Card deleted successfully', null, 200)
+            : $this->responseHelper->fail('Card not found', null, 404);
+    }
 }
