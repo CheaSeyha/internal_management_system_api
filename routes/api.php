@@ -27,7 +27,18 @@ Route::middleware('auth:api')->group(function () {
     // Add protected routes here, e.g.:
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::resource('cards', CardController::class);
+
+
+    Route::post('/create_card', [CardController::class, 'create_card']);
+    Route::get('/cards', [CardController::class, 'getAllCards']);
+    Route::post('/card/search', [CardController::class, 'searchCard']);
+    Route::delete('/card/delete/{type_card_id}/{card_type}', [CardController::class, 'deleteCard']);
+    
+    Route::post('/card/edit/{type_card_id}/{card_type}', [CardController::class, 'editCard']);
+
+
+
+
     Route::get('/cards/{id}/image', [CardController::class, 'getImage'])
         ->name('api.cards.image');
 });

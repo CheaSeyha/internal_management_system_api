@@ -10,14 +10,18 @@ class Card extends Model
     use HasFactory;
 
     protected $fillable = [
+        'type_card_id',
         'card_type',
         'card_name',
         'block',
+        'profile_image',
         'user_id',
-        'profile_image'
     ];
 
     protected $hidden = [
+        'user_id',
+        'updated_at',
+        'created_at',
         'profile_image' // Hide the actual path from JSON responses
     ];
 
@@ -27,7 +31,7 @@ class Card extends Model
 
     public function getProfileImageUrlAttribute()
     {
-        return $this->profile_image 
+        return $this->profile_image
             ? route('api.cards.image', $this->id)
             : null;
     }

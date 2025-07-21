@@ -2,59 +2,121 @@
 
 namespace App\Http\Controllers\api;
 
+use App\Helper\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CardRequest;
 use App\Services\CardService;
-use App\Helper\ResponseHelper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CardController extends Controller
 {
-    protected $cardService;
-    protected $responseHelper;
-
-    public function __construct(CardService $cardService, ResponseHelper $responseHelper)
+    protected $card_service;
+    protected $response_helper;
+    //
+    public function __construct(CardService $card_service, ResponseHelper $response_helper)
     {
-        $this->cardService = $cardService;
-        $this->responseHelper = $responseHelper;
+        $this->card_service = $card_service;
+        $this->response_helper = $response_helper;
     }
 
-    public function index()
+    public function create_card(CardRequest $request)
     {
-        $response = $this->cardService->getAllCards();
-        return response()->json($response->getData(), $response->getStatusCode());
+        try {
+            $cardData = $request->validated();
+            $cardData['user_id'] = Auth::user()->id;
+
+            $response = $this->card_service->createCard($cardData);
+
+            return response()->json($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Failed to store card.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function store(CardRequest $request)
+    public function getAllCards()
     {
-        $data = $request->validated();
-        $data['user_id'] = auth()->id(); // Set current user as owner
-        
-        $response = $this->cardService->store($data);
-        return response()->json($response->getData(), $response->getStatusCode());
+        try {
+            $response = $this->card_service->getAllCards();
+            return response()->json($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Failed to fetch cards.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function show($id)
+    public function searchCard(Request $request)
     {
-        $response = $this->cardService->getCardById($id);
-        return response()->json($response->getData(), $response->getStatusCode());
+        if ($request->has('card_name')) {
+            $validate = $request->validate([
+                'card_name' => 'required|string',
+                'card_type' => 'nullable|string',
+            ]);
+
+            try {
+                $response = $this->card_service->getCardByNameAndCardType(
+                    $validate['card_name'],
+                    $validate['card_type'] ?? null // ✅ FIXED HERE
+                );
+
+                return response()->json($response->getData(), $response->getStatusCode());
+            } catch (\Throwable $th) {
+                return $this->response_helper->fail('Error', $th->getMessage());
+            }
+        }
+
+
+        if ($request->has('type_card_id')) {
+            $validate = $request->validate([
+                'type_card_id' => "required | string",
+                "card_type" => "required | string"
+            ]);
+
+            try {
+                $response = $this->card_service->getCardByIDAndCardType($validate['type_card_id'], $validate['card_type']);
+
+                return response()->json($response->getData(), $response->getStatusCode());
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json([
+                    'message' => 'Failed to fetch cards.',
+                    'error' => $th->getMessage()
+                ], 500);
+            }
+        }
+
+        return $this->response_helper->fail('To Search Card Required Card_name Or Card ID');
     }
 
-    public function update(CardRequest $request, $id)
+    public function editCard(Request $request, $type_card_id, $card_type)
     {
-        $data = $request->validated();
-        $response = $this->cardService->updateCard($id, $data);
-        return response()->json($response->getData(), $response->getStatusCode());
+        try {
+            $res = $this->card_service->editCard($type_card_id,$card_type, $request->all());
+
+            return response()->json($res->getData(), $res->getStatusCode());
+        } catch (\Throwable $e) {
+             return response()->json([
+                'message' => 'Failed to fetch cards.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function destroy($id)
+    public function deleteCard(Request $request, $type_card_id, $card_type)
     {
-        $response = $this->cardService->deleteCard($id);
-        return response()->json($response->getData(), $response->getStatusCode());
+
+        try {
+            $res = $this->card_service->deleteCardByIDAndCardType($type_card_id, $card_type);
+
+            return response()->json($res->getData(), $res->getStatusCode());
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
-    public function getImage($id)
-    {
-        return $this->cardService->getCardImageResponse($id);
-    }
 }
