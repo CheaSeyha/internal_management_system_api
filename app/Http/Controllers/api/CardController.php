@@ -37,6 +37,20 @@ class CardController extends Controller
         }
     }
 
+
+    public function getImage($id)
+    {
+        try {
+            // Use your existing service method
+            return $this->card_service->getCardImageResponse($id);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Failed to fetch card image.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function getAllCards()
     {
         try {
@@ -96,11 +110,11 @@ class CardController extends Controller
     public function editCard(Request $request, $type_card_id, $card_type)
     {
         try {
-            $res = $this->card_service->editCard($type_card_id,$card_type, $request->all());
+            $res = $this->card_service->editCard($type_card_id, $card_type, $request->all());
 
             return response()->json($res->getData(), $res->getStatusCode());
         } catch (\Throwable $e) {
-             return response()->json([
+            return response()->json([
                 'message' => 'Failed to fetch cards.',
                 'error' => $e->getMessage()
             ], 500);
