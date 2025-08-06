@@ -44,9 +44,9 @@ class AuthSevice
         if (!$accessToken = Auth::attempt($credentials)) {
             return $this->responseHelper->fail('Unauthorized Email or Password', null, 401);
         }
-
+        $userData = Auth::user();
         // If the user is found and the password is correct, return the access token and user data
-        return $this->respondWithToken($accessToken, $user);
+        return $this->respondWithToken($accessToken, $userData);
     }
 
     /**
