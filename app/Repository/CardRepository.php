@@ -49,7 +49,7 @@ class CardRepository
 
     public function getAllCards()
     {
-        return Card::with('user')->get()->map(function ($card) {
+        return Card::with('user')->latest()->take(17)->get()->map(function ($card) {
             $card->create_by = $card->user->name;
             $card->makeHidden('user');
             return $card;
