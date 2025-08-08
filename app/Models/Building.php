@@ -12,4 +12,8 @@ class Building extends Model
     {
         return $this->hasMany(Room::class);
     }
+        protected $hidden = [
+        'updated_at',
+        'created_at',
+    ];
 }

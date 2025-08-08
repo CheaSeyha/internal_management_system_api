@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
             $table->string('room_name', 100);
-            $table->bigInteger('building_id')->unsigned()->nullable()->index();
-            $table->foreign('building_id')->references('id')->on('buildings')->onDelete('set null');
+            $table->unsignedBigInteger('building_id')->index(); // NOT nullable
+            $table->unique(['building_id', 'room_name']);
+            $table->foreign('building_id')
+                ->references('id')->on('buildings')
+                ->onDelete('cascade'); // or 'restrict', depending on your need
             $table->timestamps();
         });
     }
