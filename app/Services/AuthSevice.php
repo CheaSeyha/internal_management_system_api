@@ -90,8 +90,12 @@ class AuthSevice
      */
     public function refreshToken()
     {
-        $user = Auth::user();
-        return $this->respondWithToken(auth()->refresh(), $user, 'Token refreshed successfully');
+        $newToken = Auth::refresh();
+
+        // Authenticate with new token to get user
+        $user = Auth::setToken($newToken)->user();
+
+        return $this->respondWithToken($newToken, $user, 'Token refreshed successfully');
     }
 
     /**
@@ -102,7 +106,7 @@ class AuthSevice
     public function logout()
     {
         Auth::logout();
-        return $this->responseHelper->success('User logged out successfully',null, 200);
+        return $this->responseHelper->success('User logged out successfully', null, 200);
     }
 
     protected function respondWithToken($token, $user, $message = 'Login successful')
