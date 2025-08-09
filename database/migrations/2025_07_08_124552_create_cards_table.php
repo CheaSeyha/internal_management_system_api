@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('card_type_id');
             $table->string('card_type', 50);
             $table->string('card_name', 50);
-            $table->string('block', 50);
+            $table->json("block");
             $table->string('profile_image', 200)->nullable();
             $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');

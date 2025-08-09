@@ -17,8 +17,10 @@ class BlockRepository
     // Building CRUD -----------------------------
     public function getAllBuildings()
     {
-        $buildings = Building::all();
-        return $buildings ? $buildings : false;
+        $buildings = Building::orderBy('building_name', 'asc')->get();
+
+        return $buildings->isEmpty() ? false : $buildings;
+
     }
 
     public function createBuilding($building_name)

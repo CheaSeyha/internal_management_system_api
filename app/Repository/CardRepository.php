@@ -145,7 +145,7 @@ class CardRepository
             $file = $data['profile_image'];
             $extension = $file->getClientOriginalExtension();
             $sanitizedName = Str::slug($data['card_name']);
-            $filename = "card_type={$card->card_type}-card_type_id={$card->card_type_id}/{$sanitizedName}.{$extension}";
+            $filename = "card_type={$card->card_type}-card_type_id={$card->card_type_id}-{$sanitizedName}.{$extension}";
 
             $card->profile_image = $file->storeAs(
                 'cards/profile_images',

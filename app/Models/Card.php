@@ -29,6 +29,11 @@ class Card extends Model
         'profile_image_url'
     ];
 
+    protected $casts = [
+        'block' => 'array',
+    ];
+
+
     public function getProfileImageUrlAttribute()
     {
         return $this->profile_image
