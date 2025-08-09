@@ -71,9 +71,9 @@ class CardService
         );
     }
 
-    public function editCard(int $type_card_id,string $card_type,$request)
+    public function editCard(int $type_card_id, string $card_type, $request)
     {
-        $result = $this->cardRepository->updateCard($type_card_id,$card_type,$request);
+        $result = $this->cardRepository->updateCard($type_card_id, $card_type, $request);
 
         return $result
             ? $this->responseHelper->success('Card Updated successfully', $result, 200)
@@ -82,10 +82,20 @@ class CardService
 
     public function deleteCardByIDAndCardType(int $type_card_id, string $card_type)
     {
-        $result = $this->cardRepository->deleteCard($type_card_id,$card_type);
+        $result = $this->cardRepository->deleteCard($type_card_id, $card_type);
 
         return $result
             ? $this->responseHelper->success('Card deleted successfully', null, 200)
             : $this->responseHelper->fail('Card not found', null, 404);
+    }
+
+    public function searchAllCards($searchAllCards)
+    {
+
+        $result = $this->cardRepository->searchAllCards($searchAllCards);
+
+        return $result
+            ? $this->responseHelper->success('Cards found', $result, 200)
+            : $this->responseHelper->fail('Cards not found', null, 404);
     }
 }

@@ -64,6 +64,20 @@ class CardController extends Controller
         }
     }
 
+    public function searchAllCards($cardSearchAll)
+    {
+
+        try {
+            $response = $this->card_service->searchAllCards($cardSearchAll);
+            return response()->json($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Failed to search cards.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function searchCard(Request $request)
     {
         if ($request->has('card_name')) {

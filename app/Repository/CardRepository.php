@@ -106,6 +106,21 @@ class CardRepository
     }
 
 
+    public function searchAllCards(?string $searchTerm)
+    {
+        $query = Card::query();
+
+        if ($searchTerm) {
+            $query->where('card_type_id', 'like', "%{$searchTerm}%")
+                ->orWhere('card_type', 'like', "%{$searchTerm}%")
+                ->orWhere('card_name', 'like', "%{$searchTerm}%");
+        }
+
+        $results = $query->orderBy('card_name', 'asc')->get();
+
+        return $results->isEmpty() ? false : $results;
+    }
+
 
 
     public function getCardImage($cardId)

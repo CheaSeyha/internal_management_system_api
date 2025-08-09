@@ -32,7 +32,11 @@ Route::middleware('auth:api')->group(function () {
     //Cards Routes CRUD
     Route::post('/create_card', [CardController::class, 'create_card']);
     Route::get('/cards', [CardController::class, 'getAllCards']);
+    //Specific card search 
     Route::post('/card/search', [CardController::class, 'searchCard']);
+    //General card search name card_type_id block 
+    Route::post('/card/search_all_cards/{searchAllCards}', [CardController::class, 'searchAllCards']);
+    
     Route::delete('/card/delete/{type_card_id}/{card_type}', [CardController::class, 'deleteCard']);
     Route::post('/card/edit/{type_card_id}/{card_type}', [CardController::class, 'editCard']);
     //Cards Routes CRUD
