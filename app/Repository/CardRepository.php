@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
+use function PHPUnit\Framework\isEmpty;
+
 class CardRepository
 {
     public function store(array $data)
@@ -106,21 +108,43 @@ class CardRepository
     }
 
 
-    public function searchAllCards(?string $searchTerm)
+    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null)
     {
-        $query = Card::query();
+        $results = Card::when(!empty($searchByName), function ($query) use ($searchByName) {
+            $query->where('card_name', 'like', '%' . $searchByName . '%');
+        })
+            ->get()
+            ->filter(function ($card) use ($filter, $filterValue) {
+                if ($filter === 'block') {
+                    $blocks = json_decode($card->block, true) ?? [];
+                    return in_array($filterValue, $blocks);
+                }
+                if ($filter === 'card_type') {
+                    return $card->card_type === $filterValue;
+                }
+                return true;
+            });
 
-        if ($searchTerm) {
-            $query->where('card_type_id', 'like', "%{$searchTerm}%")
-                ->orWhere('card_type', 'like', "%{$searchTerm}%")
-                ->orWhere('card_name', 'like', "%{$searchTerm}%");
-        }
-
-        $results = $query->orderBy('card_name', 'asc')->get();
-
-        return $results->isEmpty() ? false : $results;
+        return $results->values(); // reset array keys
     }
 
+
+
+
+
+
+
+
+
+
+
+    public function getAllCardType()
+    {
+        return Card::whereNotNull('card_type')
+            ->where('card_type', '!=', '')
+            ->distinct()
+            ->pluck('card_type');
+    }
 
 
     public function getCardImage($cardId)
@@ -167,7 +191,6 @@ class CardRepository
                 $filename,
                 'private'
             );
-
         }
         //complete the updated
         $card->save();

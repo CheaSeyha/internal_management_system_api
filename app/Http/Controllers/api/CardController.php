@@ -64,11 +64,18 @@ class CardController extends Controller
         }
     }
 
-    public function searchAllCards($cardSearchAll)
+    public function cardsFilter(Request $request)
     {
 
+        $validate = $request->validate([
+            'card_name' => 'string|nullable',
+            'filter' => 'string|nullable',
+            'filterValue' => 'string|nullable',
+        ]);
+        
+
         try {
-            $response = $this->card_service->searchAllCards($cardSearchAll);
+            $response = $this->card_service->cardsFilter($request['card_name'],$request['filter'],$request['filterValue']);
             return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
             return response()->json([
@@ -77,6 +84,21 @@ class CardController extends Controller
             ], 500);
         }
     }
+
+    public function getAllCardType()
+    {
+
+        try {
+            $response = $this->card_service->getAllCardType();
+            return response()->json($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Failed to search cards.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function searchCard(Request $request)
     {

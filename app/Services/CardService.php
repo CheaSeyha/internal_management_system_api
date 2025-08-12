@@ -89,13 +89,24 @@ class CardService
             : $this->responseHelper->fail('Card not found', null, 404);
     }
 
-    public function searchAllCards($searchAllCards)
+    public function cardsFilter($searchByName, $filter, $filterValue)
     {
 
-        $result = $this->cardRepository->searchAllCards($searchAllCards);
+        $result = $this->cardRepository->cardsFilter($searchByName, $filter, $filterValue);
+        // $result = $this->cardRepository->cardsFilter();
 
         return $result
             ? $this->responseHelper->success('Cards found', $result, 200)
             : $this->responseHelper->fail('Cards not found', null, 404);
+    }
+
+
+    public function getAllCardType()
+    {
+        $result = $this->cardRepository->getAllCardType();
+
+        return $result
+            ? $this->responseHelper->success('All Card Type found', $result, 200)
+            : $this->responseHelper->fail('All Card Type not found', null, 404);
     }
 }
