@@ -1,69 +1,63 @@
-# Use official PHP image with Apache
+# Use official PHP 8.2 with Apache
 FROM php:8.2-apache
-
-# Install system dependencies and PHP extensions
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    libzip-dev \
-    libpng-dev \
-    libonig-dev \  # Fixed typo here (was libonid-dev)
-    libxml2-dev \
-    sqlite3 \
-    libsqlite3-dev \
-    && docker-php-ext-install pdo pdo_mysql pdo_sqlite zip gd \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Enable Apache modules
-RUN a2enmod rewrite headers
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy only necessary files for composer first
-COPY composer.json composer.lock ./
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    sqlite3 \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_sqlite mbstring exif pcntl bcmath gd
 
 # Install Composer
-COPY --from=composer:2.5 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install PHP dependencies (no dev dependencies)
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
 
-# Copy application files
+# Copy Apache config
+COPY ./docker/000-default.conf /etc/apache2/sites-available/000-default.conf
+
+# Copy application files (excluding unnecessary files via .dockerignore)
 COPY . .
 
-# Create and prepare SQLite database
-RUN mkdir -p /var/www/html/database \
-    && touch /var/www/html/database/database.sqlite \
-    && chown -R www-data:www-data \
-        /var/www/html/storage \
-        /var/www/html/bootstrap/cache \
-        /var/www/html/database \
-    && chmod -R 775 /var/www/html/database \
-    && chmod 664 /var/www/html/database/database.sqlite
+# Install Laravel dependencies (no dev dependencies for production)
+RUN composer install --no-dev --optimize-autoloader
 
-# Set Apache document root
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/conf-available/*.conf
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache
 
-# Create startup script
-RUN echo '#!/bin/bash\n\
-set -e\n\
-php artisan config:clear\n\
-php artisan cache:clear\n\
-php artisan migrate --force\n\
-chown -R www-data:www-data /var/www/html/database\n\
-exec apache2-foreground' > /usr/local/bin/start.sh \
-    && chmod +x /usr/local/bin/start.sh
+# Generate application key (if not set in .env)
+RUN php artisan key:generate --ansi
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s \
-    CMD curl -f http://localhost/health-check || exit 1
+# Create SQLite database file
+RUN touch database/database.sqlite
 
-# Expose port
+# Set environment variables
+ENV APACHE_RUN_USER=www-data
+ENV APACHE_RUN_GROUP=www-data
+ENV APACHE_LOG_DIR=/var/log/apache2
+
+# Expose port 80 (Render will map this to its own port)
 EXPOSE 80
 
-# Use the startup script
-CMD ["/usr/local/bin/start.sh"]
+# Entrypoint script (handles migrations & JWT secret)
+COPY ./docker/entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+
+# Start Apache in foreground
+CMD ["apache2-foreground"]
