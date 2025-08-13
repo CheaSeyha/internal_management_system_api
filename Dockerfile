@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     libpng-dev \
-    libonid-dev \
+    libonig-dev \  # Fixed typo here (was libonid-dev)
     libxml2-dev \
     sqlite3 \
     libsqlite3-dev \
@@ -45,16 +45,17 @@ RUN mkdir -p /var/www/html/database \
 
 # Set Apache document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/conf-available/*.conf
 
 # Create startup script
-RUN echo "#!/bin/bash\n\
+RUN echo '#!/bin/bash\n\
 set -e\n\
 php artisan config:clear\n\
 php artisan cache:clear\n\
 php artisan migrate --force\n\
 chown -R www-data:www-data /var/www/html/database\n\
-exec apache2-foreground" > /usr/local/bin/start.sh \
+exec apache2-foreground' > /usr/local/bin/start.sh \
     && chmod +x /usr/local/bin/start.sh
 
 # Health check
@@ -65,4 +66,4 @@ HEALTHCHECK --interval=30s --timeout=3s \
 EXPOSE 80
 
 # Use the startup script
-CMD ["start.sh"]
+CMD ["/usr/local/bin/start.sh"]
