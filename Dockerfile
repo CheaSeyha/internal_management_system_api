@@ -40,9 +40,6 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
-# Generate application key (if not set in .env)
-RUN php artisan key:generate --ansi
-
 # Create SQLite database file
 RUN touch database/database.sqlite
 
@@ -54,7 +51,7 @@ ENV APACHE_LOG_DIR=/var/log/apache2
 # Expose port 80 (Render will map this to its own port)
 EXPOSE 80
 
-# Entrypoint script (handles migrations & JWT secret)
+# Entrypoint script (handles .env setup, key generation, migrations & JWT secret)
 COPY ./docker/entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
