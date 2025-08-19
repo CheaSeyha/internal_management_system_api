@@ -110,9 +110,10 @@ class CardRepository
 
     public function cardsFilter($searchByName = null, $filter = null, $filterValue = null)
     {
-        $results = Card::when(!empty($searchByName), function ($query) use ($searchByName) {
-            $query->where('card_name', 'like', '%' . $searchByName . '%');
-        })
+        $results = Card::with('user') // 👈 eager load user
+            ->when(!empty($searchByName), function ($query) use ($searchByName) {
+                $query->where('card_name', 'like', '%' . $searchByName . '%');
+            })
             ->get()
             ->filter(function ($card) use ($filter, $filterValue) {
                 if ($filter === 'block') {
@@ -123,10 +124,17 @@ class CardRepository
                     return $card->card_type === $filterValue;
                 }
                 return true;
+            })
+            ->map(function ($card) {
+                // 👇 same as getAllCards()
+                $card->create_by = $card->user->name ?? null;
+                $card->makeHidden('user');
+                return $card;
             });
 
         return $results->values(); // reset array keys
     }
+
 
 
 
