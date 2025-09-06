@@ -51,12 +51,18 @@ class CardRepository
 
     public function getAllCards()
     {
-        return Card::with('user')->latest()->take(17)->get()->map(function ($card) {
-            $card->create_by = $card->user->name;
-            $card->makeHidden('user');
+        $cards = Card::with('user')->latest()->paginate(17);
+
+        // transform items in paginator
+        $cards->getCollection()->transform(function ($card) {
+            $card->create_by = $card->user->name ?? null; // only name
+            $card->makeHidden('user'); // remove full user
             return $card;
         });
+
+        return $cards;
     }
+
 
     public function getCardById($id)
     {
