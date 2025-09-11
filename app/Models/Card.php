@@ -37,9 +37,10 @@ class Card extends Model
     public function getProfileImageUrlAttribute()
     {
         return $this->profile_image
-            ? route('api.cards.image', $this->id)
+            ? "/cards/{$this->id}/image"
             : null;
     }
+
 
     public function user()
     {
