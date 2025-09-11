@@ -91,13 +91,12 @@ class CardRepository
 
     public function getAllCards()
     {
-        // Load cards with user and latest first, paginated
-        $cards = Card::with(['user', 'buildings.rooms'])->latest()->paginate(17);
+        // Load cards with relationships
+        $cards = Card::with(['user', 'cardType', 'buildings.rooms'])->latest()->paginate(17);
 
-        // Transform each card
         $cards->getCollection()->transform(function ($card) {
-            // Prepare block string
-            $blockString = $card->buildings->map(function ($building) use ($card) {
+            // Build block string
+            $blockString = $card->buildings->map(function ($building) {
                 $pivotRoomId = $building->pivot->room_id;
                 $roomName = $building->rooms->firstWhere('id', $pivotRoomId)->room_name ?? null;
 
@@ -108,8 +107,8 @@ class CardRepository
 
             return [
                 'id'               => $card->id,
-                'card_type_id'     => $card->card_type_id,
-                'card_type'        => $card->cardType->name ?? null,
+                'card_type_id'     => str_pad($card->card_number, 6, '0', STR_PAD_LEFT),
+                'card_type'        => $card->cardType->name ?? null, // ✅ FIXED
                 'card_name'        => $card->card_name,
                 'block'            => $blockString,
                 'create_by'        => $card->user->name ?? null,
@@ -119,6 +118,7 @@ class CardRepository
 
         return $cards;
     }
+
 
 
 

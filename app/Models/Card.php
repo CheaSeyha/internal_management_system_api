@@ -10,7 +10,7 @@ class Card extends Model
     use HasFactory;
 
     protected $fillable = [
-        'card_type_id', // store actual ID
+        'card_type_id',
         'card_name',
         'card_number',
         'block',
@@ -26,17 +26,18 @@ class Card extends Model
     ];
 
     protected $appends = [
-        'profile_image_url'
+        'profile_image_url',
+        'formatted_card_number', // new
     ];
 
     protected $casts = [
         'block' => 'array',
     ];
 
-    // Accessor for formatted card_type_id
-    public function getCardTypeIdAttribute($value)
+    // ✅ New accessor for formatted card number
+    public function getFormattedCardNumberAttribute()
     {
-        return str_pad($value, 6, '0', STR_PAD_LEFT);
+        return str_pad($this->card_number, 6, '0', STR_PAD_LEFT);
     }
 
     public function getProfileImageUrlAttribute()
