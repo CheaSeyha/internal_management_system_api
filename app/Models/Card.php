@@ -52,4 +52,14 @@ class Card extends Model
     {
         return str_pad($value, 6, '0', STR_PAD_LEFT);
     }
+
+    public function type()
+    {
+        return $this->belongsTo(CardType::class, 'card_type_id');
+    }
+
+    public function buildings()
+    {
+        return $this->hasMany(CardBuildingRoom::class, 'card_id');
+    }
 }

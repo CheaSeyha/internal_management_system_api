@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('rooms', function (Blueprint $table) {
+        Schema::create('card_building_room', function (Blueprint $table) {
             $table->id();
-            $table->string('room_name', 100);
+            $table->foreignId('card_id')->constrained('cards')->onDelete('cascade');
             $table->foreignId('building_id')->constrained('buildings')->onDelete('cascade');
+            $table->foreignId('room_id')->nullable()->constrained('rooms')->nullOnDelete();
             $table->timestamps();
-
-            $table->unique(['building_id', 'room_name']);
+            $table->unique(['card_id', 'building_id', 'room_id']); // prevent duplicates
         });
     }
 
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('rooms');
+        Schema::dropIfExists('card_building_room');
     }
 };

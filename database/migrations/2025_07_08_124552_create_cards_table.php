@@ -13,13 +13,10 @@ return new class extends Migration
     {
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('card_type_id');
-            $table->string('card_type', 50);
+            $table->foreignId('card_type_id')->constrained('card_types')->onDelete('restrict'); // link to type
             $table->string('card_name', 50);
-            $table->json("block");
             $table->string('profile_image', 200)->nullable();
-            $table->unsignedBigInteger('user_id')->nullable()->index();
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

@@ -116,37 +116,30 @@ class CardRepository
 
     public function cardsFilter($searchByName = null, $filter = null, $filterValue = null)
     {
-        // Build query for basic filters
         $query = Card::with('user');
 
-        // Search by name
-        if (!empty($searchByName)) {
+        if ($searchByName) {
             $query->where('card_name', 'like', '%' . $searchByName . '%');
         }
-
-        // Filter by card_type in DB
-        if ($filter === 'card_type' && !empty($filterValue)) {
+        if ($filter === 'card_type' && $filterValue) {
             $query->where('card_type', $filterValue);
         }
 
-        // Paginate first, then do PHP filtering for block
-        $cards = $query->latest()->paginate(17);
-
-        // Filter block in PHP
-        if ($filter === 'block' && !empty($filterValue)) {
-            $filtered = $cards->getCollection()->filter(function ($card) use ($filterValue) {
-                $blocks = json_decode($card->block, true) ?? [];
-                return in_array($filterValue, $blocks);
-            });
-            $cards->setCollection($filtered->values()); // Reset indexes
+        if ($filter === 'block' && $filterValue !== null) {
+            $query->where('block',$filterValue);
         }
 
-        // Transform like getAllCards
-        $cards->getCollection()->transform(function ($card) {
-            $card->create_by = $card->user->name ?? null;
-            $card->makeHidden('user');
-            return $card;
-        });
+        // dd($query);
+
+
+        $cards = $query->get();
+
+        // // transform items in paginator
+        // $cards->getCollection()->transform(function ($card) {
+        //     $card->create_by = $card->user->name ?? null; // only name
+        //     $card->makeHidden('user'); // remove full user
+        //     return $card;
+        // });
 
         return $cards;
     }
