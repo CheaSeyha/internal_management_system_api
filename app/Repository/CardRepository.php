@@ -30,6 +30,20 @@ class CardRepository
             'card_name'    => $data['card_name'],
             'user_id'      => auth()->id(),
         ]);
+        // Store iamge if provided
+        if (isset($data['profile_image'])) {
+            $file = $data['profile_image'];
+            $extension = $file->getClientOriginalExtension();
+            $sanitizedName = Str::slug($data['card_name']);
+            $filename = "card_type={$card->card_type}-card_type_id={$card->card_type_id}-{$sanitizedName}.{$extension}";
+
+            $card->profile_image = $file->storeAs(
+                'cards/profile_images',
+                $filename,
+                'private'
+            );
+            $card->save();
+        }
 
         // 4️⃣ Parse blocks and attach
         $blocks = collect(explode(',', $data['block'] ?? ''))
@@ -94,12 +108,12 @@ class CardRepository
 
             return [
                 'id'               => $card->id,
-                'card_type_id'     => str_pad($card->card_number, 6, '0', STR_PAD_LEFT),
-                'card_type'        => $card->type->name ?? null,
+                'card_type_id'     => $card->card_type_id,
+                'card_type'        => $card->cardType->name ?? null,
                 'card_name'        => $card->card_name,
                 'block'            => $blockString,
                 'create_by'        => $card->user->name ?? null,
-                'profile_image_url' => url("/cards/{$card->id}/image"),
+                'profile_image_url' => $card->profile_image_url,
             ];
         });
 

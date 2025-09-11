@@ -10,8 +10,7 @@ class Card extends Model
     use HasFactory;
 
     protected $fillable = [
-        'card_type_id',   // <-- fix this
-        'card_type',
+        'card_type_id', // store actual ID
         'card_name',
         'card_number',
         'block',
@@ -19,12 +18,11 @@ class Card extends Model
         'user_id',
     ];
 
-
     protected $hidden = [
         'user_id',
         'updated_at',
         'created_at',
-        'profile_image' // Hide the actual path from JSON responses
+        'profile_image',
     ];
 
     protected $appends = [
@@ -35,6 +33,11 @@ class Card extends Model
         'block' => 'array',
     ];
 
+    // Accessor for formatted card_type_id
+    public function getCardTypeIdAttribute($value)
+    {
+        return str_pad($value, 6, '0', STR_PAD_LEFT);
+    }
 
     public function getProfileImageUrlAttribute()
     {
@@ -43,24 +46,16 @@ class Card extends Model
             : null;
     }
 
-
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Accessor for formatted card_type_id
-    public function getCardTypeIdAttribute($value)
-    {
-        return str_pad($value, 6, '0', STR_PAD_LEFT);
-    }
-
-    public function type()
+    public function cardType()
     {
         return $this->belongsTo(CardType::class, 'card_type_id');
     }
 
-    // Card.php
     public function buildings()
     {
         return $this->belongsToMany(Building::class, 'card_building_room')
