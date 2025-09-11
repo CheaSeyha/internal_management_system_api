@@ -46,4 +46,10 @@ class Card extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Accessor for formatted card_type_id
+    public function getCardTypeIdAttribute($value)
+    {
+        return str_pad($value, 6, '0', STR_PAD_LEFT);
+    }
 }

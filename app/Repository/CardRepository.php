@@ -116,30 +116,42 @@ class CardRepository
 
     public function cardsFilter($searchByName = null, $filter = null, $filterValue = null)
     {
-        $results = Card::with('user') // 👈 eager load user
-            ->when(!empty($searchByName), function ($query) use ($searchByName) {
-                $query->where('card_name', 'like', '%' . $searchByName . '%');
-            })
-            ->get()
-            ->filter(function ($card) use ($filter, $filterValue) {
-                if ($filter === 'block') {
-                    $blocks = json_decode($card->block, true) ?? [];
-                    return in_array($filterValue, $blocks);
-                }
-                if ($filter === 'card_type') {
-                    return $card->card_type === $filterValue;
-                }
-                return true;
-            })
-            ->map(function ($card) {
-                // 👇 same as getAllCards()
-                $card->create_by = $card->user->name ?? null;
-                $card->makeHidden('user');
-                return $card;
-            });
+        // Build query for basic filters
+        $query = Card::with('user');
 
-        return $results->values(); // reset array keys
+        // Search by name
+        if (!empty($searchByName)) {
+            $query->where('card_name', 'like', '%' . $searchByName . '%');
+        }
+
+        // Filter by card_type in DB
+        if ($filter === 'card_type' && !empty($filterValue)) {
+            $query->where('card_type', $filterValue);
+        }
+
+        // Paginate first, then do PHP filtering for block
+        $cards = $query->latest()->paginate(17);
+
+        // Filter block in PHP
+        if ($filter === 'block' && !empty($filterValue)) {
+            $filtered = $cards->getCollection()->filter(function ($card) use ($filterValue) {
+                $blocks = json_decode($card->block, true) ?? [];
+                return in_array($filterValue, $blocks);
+            });
+            $cards->setCollection($filtered->values()); // Reset indexes
+        }
+
+        // Transform like getAllCards
+        $cards->getCollection()->transform(function ($card) {
+            $card->create_by = $card->user->name ?? null;
+            $card->makeHidden('user');
+            return $card;
+        });
+
+        return $cards;
     }
+
+
 
 
 
