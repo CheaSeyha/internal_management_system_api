@@ -12,8 +12,16 @@ class Building extends Model
     {
         return $this->hasMany(Room::class);
     }
-        protected $hidden = [
+    protected $hidden = [
         'updated_at',
         'created_at',
     ];
+
+    // Building.php
+    public function cards()
+    {
+        return $this->belongsToMany(Card::class, 'card_building_room')
+            ->withPivot('room_id')
+            ->withTimestamps();
+    }
 }

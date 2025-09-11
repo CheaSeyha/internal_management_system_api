@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
             $table->foreignId('card_type_id')->constrained('card_types')->onDelete('restrict'); // link to type
+            $table->unsignedInteger('card_number');
             $table->string('card_name', 50);
             $table->string('profile_image', 200)->nullable();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();

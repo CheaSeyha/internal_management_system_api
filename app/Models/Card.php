@@ -10,13 +10,15 @@ class Card extends Model
     use HasFactory;
 
     protected $fillable = [
-        'type_card_id',
+        'card_type_id',   // <-- fix this
         'card_type',
         'card_name',
+        'card_number',
         'block',
         'profile_image',
         'user_id',
     ];
+
 
     protected $hidden = [
         'user_id',
@@ -58,8 +60,11 @@ class Card extends Model
         return $this->belongsTo(CardType::class, 'card_type_id');
     }
 
+    // Card.php
     public function buildings()
     {
-        return $this->hasMany(CardBuildingRoom::class, 'card_id');
+        return $this->belongsToMany(Building::class, 'card_building_room')
+            ->withPivot('room_id')
+            ->withTimestamps();
     }
 }

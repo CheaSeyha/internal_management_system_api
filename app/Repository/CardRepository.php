@@ -2,7 +2,10 @@
 
 namespace App\Repository;
 
+use App\Models\Building;
 use App\Models\Card;
+use App\Models\CardType;
+use App\Models\Room;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -13,55 +16,96 @@ class CardRepository
 {
     public function store(array $data)
     {
-        return DB::transaction(function () use ($data) {
-            // Step 1: Get the latest card_type_id for this type
-            $lastId = Card::where('card_type', $data['card_type'])
-                ->lockForUpdate()
-                ->max('card_type_id') ?? 0;
+        // 1️⃣ Get or create CardType
+        $cardType = CardType::firstOrCreate(['name' => $data['card_type']]);
 
-            $newTypeId = $lastId + 1;
+        // 2️⃣ Determine next card number
+        $lastNumber = Card::where('card_type_id', $cardType->id)->max('card_number') ?? 0;
+        $nextNumber = $lastNumber + 1;
 
-            // Step 2: Create card with card_type_id
-            $card = new Card();
-            $card->card_type_id = $newTypeId;
-            $card->card_type = $data['card_type'];
-            $card->card_name = $data['card_name'];
-            $card->block = $data['block'];
-            $card->user_id = $data['user_id'];
-            $card->save();
+        // 3️⃣ Create card
+        $card = Card::create([
+            'card_type_id' => $cardType->id,
+            'card_number'  => $nextNumber,
+            'card_name'    => $data['card_name'],
+            'user_id'      => auth()->id(),
+        ]);
 
-            // Step 3: Handle profile image if provided
-            if (isset($data['profile_image'])) {
-                $file = $data['profile_image'];
-                $extension = $file->getClientOriginalExtension();
-                $sanitizedName = Str::slug($data['card_name']);
-                $filename = "card_type={$card->card_type}-card_type_id={$card->card_type_id}-{$sanitizedName}.{$extension}";
+        // 4️⃣ Parse blocks and attach
+        $blocks = collect(explode(',', $data['block'] ?? ''))
+            ->map(function ($block) {
+                $parts = explode('-', $block);
+                $building = Building::where('building_name', $parts[0])->first();
+                if (!$building) return null;
 
-                $card->profile_image = $file->storeAs(
-                    'cards/profile_images',
-                    $filename,
-                    'private'
-                );
-                $card->save();
-            }
+                $roomId = isset($parts[1])
+                    ? Room::where('room_name', $parts[1])
+                    ->where('building_id', $building->id)
+                    ->value('id')
+                    : null;
 
-            return $card;
-        });
+                return [
+                    'building_id' => $building->id,
+                    'room_id'     => $roomId,
+                    'label'       => $block, // store original string for display
+                ];
+            })
+            ->filter();
+
+        foreach ($blocks as $block) {
+            $card->buildings()->attach($block['building_id'], ['room_id' => $block['room_id']]);
+        }
+
+        // 5️⃣ Prepare response
+        $user = auth()->user();
+        $blockString = $blocks->pluck('label')->join(', '); // combine all blocks
+
+        return [
+            'id'              => $card->id,
+            'card_type_id'    => str_pad($card->card_number, 6, '0', STR_PAD_LEFT), // formatted card number
+            'card_type'       => $cardType->name,
+            'card_name'       => $card->card_name,
+            'block'           => $blockString,
+            'create_by'       => $user->name,
+            'profile_image_url' => url("/cards/{$card->id}/image"),
+        ];
     }
+
+
+
+
 
     public function getAllCards()
     {
-        $cards = Card::with('user')->latest()->paginate(17);
+        // Load cards with user and latest first, paginated
+        $cards = Card::with(['user', 'buildings.rooms'])->latest()->paginate(17);
 
-        // transform items in paginator
+        // Transform each card
         $cards->getCollection()->transform(function ($card) {
-            $card->create_by = $card->user->name ?? null; // only name
-            $card->makeHidden('user'); // remove full user
-            return $card;
+            // Prepare block string
+            $blockString = $card->buildings->map(function ($building) use ($card) {
+                $pivotRoomId = $building->pivot->room_id;
+                $roomName = $building->rooms->firstWhere('id', $pivotRoomId)->room_name ?? null;
+
+                return $roomName
+                    ? "{$building->building_name}-{$roomName}"
+                    : $building->building_name;
+            })->join(', ');
+
+            return [
+                'id'               => $card->id,
+                'card_type_id'     => str_pad($card->card_number, 6, '0', STR_PAD_LEFT),
+                'card_type'        => $card->type->name ?? null,
+                'card_name'        => $card->card_name,
+                'block'            => $blockString,
+                'create_by'        => $card->user->name ?? null,
+                'profile_image_url' => url("/cards/{$card->id}/image"),
+            ];
         });
 
         return $cards;
     }
+
 
 
     public function getCardById($id)
@@ -126,7 +170,7 @@ class CardRepository
         }
 
         if ($filter === 'block' && $filterValue !== null) {
-            $query->where('block',$filterValue);
+            $query->where('block', $filterValue);
         }
 
         // dd($query);

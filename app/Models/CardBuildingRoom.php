@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class CardBuildingRoom extends Model
 {
     protected $table = 'card_building_room';
+    protected $fillable = ['card_id', 'building_id', 'room_id'];
 
     public function card()
     {
@@ -15,11 +16,12 @@ class CardBuildingRoom extends Model
 
     public function building()
     {
-        return $this->belongsTo(Building::class);
+        return $this->belongsTo(Building::class, 'building_id');
     }
+
 
     public function room()
     {
-        return $this->belongsTo(Room::class);
+        return $this->belongsTo(Room::class, 'room_id');
     }
 }
