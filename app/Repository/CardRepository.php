@@ -76,7 +76,7 @@ class CardRepository
 
         return [
             'id'              => $card->id,
-            'card_type_id'    => str_pad($card->card_number, 6, '0', STR_PAD_LEFT), // formatted card number
+            'card_type_id'    => $card->getFormattedCardNumberAttribute(), // formatted card number
             'card_type'       => $cardType->name,
             'card_name'       => $card->card_name,
             'block'           => $blockString,
@@ -107,7 +107,7 @@ class CardRepository
 
             return [
                 'id'               => $card->id,
-                'card_type_id'     => str_pad($card->card_number, 6, '0', STR_PAD_LEFT),
+                'card_type_id'     => $card->getFormattedCardNumberAttribute(),
                 'card_type'        => $card->cardType->name ?? null, // ✅ FIXED
                 'card_name'        => $card->card_name,
                 'block'            => $blockString,
@@ -120,6 +120,56 @@ class CardRepository
     }
 
 
+    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null)
+    {
+        $query = Card::with(['user', 'cardType', 'buildings.rooms']);
+
+        // 🔍 Search by name
+        if ($searchByName) {
+            $query->where('card_name', 'like', '%' . $searchByName . '%');
+        }
+
+        // 🔍 Filter by card type
+        if ($filter === 'card_type' && $filterValue) {
+            $query->whereHas('cardType', function ($q) use ($filterValue) {
+                $q->where('name', $filterValue);
+            });
+        }
+
+        // 🔍 Filter by block (building name)
+        if ($filter === 'block' && $filterValue) {
+            $query->whereHas('buildings', function ($q) use ($filterValue) {
+                $q->where('building_name', $filterValue);
+            });
+        }
+
+        // Get filtered cards
+        $cards = $query->get();
+
+        // Transform to match your desired return format
+        $transformed = $cards->map(function ($card) {
+            $blockString = $card->buildings->map(function ($building) {
+                $pivotRoomId = $building->pivot->room_id;
+                $roomName = $building->rooms->firstWhere('id', $pivotRoomId)->room_name ?? null;
+
+                return $roomName
+                    ? "{$building->building_name}-{$roomName}"
+                    : $building->building_name;
+            })->join(', ');
+
+            return [
+                'id'               => $card->id,
+                'card_type_id'     => $card->card_type_id, // already formatted in accessor
+                'card_type'        => $card->cardType->name ?? null,
+                'card_name'        => $card->card_name,
+                'block'            => $blockString,
+                'create_by'        => $card->user->name ?? null,
+                'profile_image_url' => $card->profile_image_url,
+            ];
+        });
+
+        return $transformed;
+    }
 
 
     public function getCardById($id)
@@ -170,50 +220,6 @@ class CardRepository
 
         return $cards;
     }
-
-
-    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null)
-    {
-        $query = Card::with('user');
-
-        if ($searchByName) {
-            $query->where('card_name', 'like', '%' . $searchByName . '%');
-        }
-        if ($filter === 'card_type' && $filterValue) {
-            $query->where('card_type', $filterValue);
-        }
-
-        if ($filter === 'block' && $filterValue !== null) {
-            $query->where('block', $filterValue);
-        }
-
-        // dd($query);
-
-
-        $cards = $query->get();
-
-        // // transform items in paginator
-        // $cards->getCollection()->transform(function ($card) {
-        //     $card->create_by = $card->user->name ?? null; // only name
-        //     $card->makeHidden('user'); // remove full user
-        //     return $card;
-        // });
-
-        return $cards;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function getAllCardType()
     {
