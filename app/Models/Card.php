@@ -63,4 +63,28 @@ class Card extends Model
             ->withPivot('room_id')
             ->withTimestamps();
     }
+
+
+    public function toResponse(): array
+    {
+        $user = $this->user;
+        $blockString = $this->buildings->map(function ($building) {
+            $pivotRoomId = $building->pivot->room_id;
+            $roomName = $building->rooms->firstWhere('id', $pivotRoomId)->room_name ?? null;
+
+            return $roomName
+                ? "{$building->building_name}-{$roomName}"
+                : $building->building_name;
+        })->join(', ');
+
+        return [
+            'id'               => $this->id,
+            'card_type_id'     => $this->getFormattedCardNumberAttribute(),
+            'card_type'        => $this->cardType->name ?? null,
+            'card_name'        => $this->card_name,
+            'block'            => $blockString,
+            'create_by'        => $user->name ?? null,
+            'profile_image_url' => $this->profile_image_url,
+        ];
+    }
 }

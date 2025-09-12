@@ -17,7 +17,8 @@ class CardRepository
     public function store(array $data)
     {
         // 1️⃣ Get or create CardType
-        $cardType = CardType::firstOrCreate(['name' => $data['card_type']]);
+        $cardType = CardType::where('name', $data['card_type'])->firstOrFail();
+
 
         // 2️⃣ Determine next card number
         $lastNumber = Card::where('card_type_id', $cardType->id)->max('card_number') ?? 0;
@@ -42,7 +43,6 @@ class CardRepository
                 $filename,
                 'private'
             );
-            $card->save();
         }
 
         // 4️⃣ Parse blocks and attach
@@ -72,62 +72,43 @@ class CardRepository
 
         // 5️⃣ Prepare response
         $user = auth()->user();
-        $blockString = $blocks->pluck('label')->join(', '); // combine all blocks
-
-        return [
-            'id'              => $card->id,
-            'card_type_id'    => $card->getFormattedCardNumberAttribute(), // formatted card number
-            'card_type'       => $cardType->name,
-            'card_name'       => $card->card_name,
-            'block'           => $blockString,
-            'create_by'       => $user->name,
-            'profile_image_url' => url("/cards/{$card->id}/image"),
-        ];
+        $blockString = $blocks->pluck('label')->join(','); // combine all blocks
+        $card->save();
+        return $card->toResponse();
     }
-
-
-
 
 
     public function getAllCards()
     {
         // Load cards with relationships
-        $cards = Card::with(['user', 'cardType', 'buildings.rooms'])->latest()->paginate(17);
+        $cards = Card::with(['user', 'cardType', 'buildings.rooms'])
+            ->latest()
+            ->paginate(17);
 
+        // Transform each Card model using toResponse()
         $cards->getCollection()->transform(function ($card) {
-            // Build block string
-            $blockString = $card->buildings->map(function ($building) {
-                $pivotRoomId = $building->pivot->room_id;
-                $roomName = $building->rooms->firstWhere('id', $pivotRoomId)->room_name ?? null;
-
-                return $roomName
-                    ? "{$building->building_name}-{$roomName}"
-                    : $building->building_name;
-            })->join(', ');
-
-            return [
-                'id'               => $card->id,
-                'card_type_id'     => $card->getFormattedCardNumberAttribute(),
-                'card_type'        => $card->cardType->name ?? null, // ✅ FIXED
-                'card_name'        => $card->card_name,
-                'block'            => $blockString,
-                'create_by'        => $card->user->name ?? null,
-                'profile_image_url' => $card->profile_image_url,
-            ];
+            return $card->toResponse();
         });
 
         return $cards;
     }
 
 
-    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null)
+
+    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null,)
     {
-        $query = Card::with(['user', 'cardType', 'buildings.rooms']);
+        $query = Card::with(['user', 'cardType', 'buildings.rooms'])->latest();
 
         // 🔍 Search by name
         if ($searchByName) {
-            $query->where('card_name', 'like', '%' . $searchByName . '%');
+            $query->where(function ($q) use ($searchByName) {
+                $q->where('card_name', 'like', '%' . $searchByName . '%')
+                    ->orWhere('card_number', $searchByName); // exact match for number
+            });
         }
+
+
+
 
         // 🔍 Filter by card type
         if ($filter === 'card_type' && $filterValue) {
@@ -143,11 +124,22 @@ class CardRepository
             });
         }
 
-        // Get filtered cards
-        $cards = $query->get();
+        // Paginate results
+        $cards = $query->paginate(17);
 
-        // Transform to match your desired return format
-        $transformed = $cards->map(function ($card) {
+        if ($cards->isEmpty()) {
+            return false; // Return false if no cards found
+        }
+
+        // Keep filter & search in pagination URLs
+        $cards->appends([
+            'searchByName' => $searchByName,
+            'filter' => $filter,
+            'filterValue' => $filterValue
+        ]);
+
+        // Transform items in the paginator
+        $cards->getCollection()->transform(function ($card) {
             $blockString = $card->buildings->map(function ($building) {
                 $pivotRoomId = $building->pivot->room_id;
                 $roomName = $building->rooms->firstWhere('id', $pivotRoomId)->room_name ?? null;
@@ -159,7 +151,7 @@ class CardRepository
 
             return [
                 'id'               => $card->id,
-                'card_type_id'     => $card->card_type_id, // already formatted in accessor
+                'card_type_id'     => $card->getFormattedCardNumberAttribute(),
                 'card_type'        => $card->cardType->name ?? null,
                 'card_name'        => $card->card_name,
                 'block'            => $blockString,
@@ -168,13 +160,13 @@ class CardRepository
             ];
         });
 
-        return $transformed;
+        return $cards;
     }
 
 
     public function getCardById($id)
     {
-        $card = Card::with('user')->find($id);
+        $card = Card::with('user')->find('card_number', $id);
 
         if ($card) {
             $card->create_by = $card->user->name;
@@ -186,18 +178,21 @@ class CardRepository
 
     public function getCardByIDAndCardType(int $typeCardId, string $card_type)
     {
-        $card = Card::with('user')
-            ->where('card_type', $card_type)
-            ->where('card_type_id', $typeCardId)
+        $card = Card::with('user', 'cardType')
+            ->where('card_number', $typeCardId)
+            ->whereHas('cardType', function ($q) use ($card_type) {
+                $q->where('name', $card_type);
+            })
             ->first();
-        //show user name that create the card
+
         if ($card) {
-            $card->create_by = $card->user->name;
+            $card->create_by = $card->user->name ?? null;
             $card->makeHidden('user');
         }
 
-        return $card;
+        return $card->toResponse();
     }
+
 
     public function getCardByNameAndCardType(string $card_name, ?string $card_type = null)
     {

@@ -22,6 +22,8 @@ class CardController extends Controller
 
     public function create_card(CardRequest $request)
     {
+        \Log::info($request->all());
+
         try {
             $cardData = $request->validated();
             $cardData['user_id'] = Auth::user()->id;

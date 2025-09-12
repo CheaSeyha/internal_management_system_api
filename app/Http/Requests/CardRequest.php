@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\Facades\Http;
 
 class CardRequest extends FormRequest
 {
@@ -14,7 +13,7 @@ class CardRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return true; // Adjust if you want role-based auth
     }
 
     /**
@@ -25,21 +24,25 @@ class CardRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'card_type' => 'required|string',
-            'card_name' => 'required|string|max:255',
-            'block' => 'required|string',
+            // 🔹 Validate that card_type exists in the card_types table
+            'card_type'     => 'required|string|exists:card_types,name',
+            'card_name'     => 'required|string|max:255',
+            'block'         => 'required|string|',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id' => 'sometimes|exists:users,id'
+            'user_id'       => 'sometimes|exists:users,id'
         ];
     }
 
+    /**
+     * Customize failed validation response
+     */
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(
             response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors(),
+                'errors'  => $validator->errors(),
             ], 422)
         );
     }
