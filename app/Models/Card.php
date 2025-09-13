@@ -68,21 +68,42 @@ class Card extends Model
     public function toResponse(): array
     {
         $user = $this->user;
-        $blockString = $this->buildings->map(function ($building) {
+
+        // 1️⃣ Group all rooms by building
+        $buildingRooms = [];
+        foreach ($this->buildings as $building) {
             $pivotRoomId = $building->pivot->room_id;
             $roomName = $building->rooms->firstWhere('id', $pivotRoomId)->room_name ?? null;
 
-            return $roomName
-                ? "{$building->building_name}-{$roomName}"
-                : $building->building_name;
-        })->join(', ');
+            if (!isset($buildingRooms[$building->building_name])) {
+                $buildingRooms[$building->building_name] = [];
+            }
+
+            if ($roomName) {
+                $buildingRooms[$building->building_name][] = $roomName;
+            }
+        }
+
+        // 2️⃣ Merge rooms per building
+        $mergedBlocks = [];
+        foreach ($buildingRooms as $building => $rooms) {
+            if (empty($rooms)) {
+                $mergedBlocks[] = $building; // building only
+            } else {
+                // sort rooms numerically/alphabetically if needed
+                sort($rooms);
+                $mergedBlocks[] = $building . '-' . implode('-', $rooms);
+            }
+        }
+
+        $blockString = implode(',', $mergedBlocks);
 
         return [
             'id'               => $this->id,
             'card_type_id'     => $this->getFormattedCardNumberAttribute(),
-            'card_type'        => $this->cardType->name ?? null,
+            'card_type'        =>  strtoupper($this->cardType->name ?? ''),
             'card_name'        => $this->card_name,
-            'block'            => $blockString,
+            'block'            => $blockString, // now merged correctly
             'create_by'        => $user->name ?? null,
             'profile_image_url' => $this->profile_image_url,
         ];

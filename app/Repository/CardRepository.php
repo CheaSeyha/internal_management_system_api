@@ -36,7 +36,7 @@ class CardRepository
             $file = $data['profile_image'];
             $extension = $file->getClientOriginalExtension();
             $sanitizedName = Str::slug($data['card_name']);
-            $filename = "card_type={$card->card_type}-card_type_id={$card->card_type_id}-{$sanitizedName}.{$extension}";
+            $filename = "card_type={$data['card_type']},card_id={$nextNumber},card_name={$sanitizedName}.{$extension}";
 
             $card->profile_image = $file->storeAs(
                 'cards/profile_images',
@@ -49,26 +49,45 @@ class CardRepository
         $blocks = collect(explode(',', $data['block'] ?? ''))
             ->map(function ($block) {
                 $parts = explode('-', $block);
-                $building = Building::where('building_name', $parts[0])->first();
+                $buildingName = $parts[0];
+                $roomNames = array_slice($parts, 1); // all rooms after building
+
+                $building = Building::where('building_name', $buildingName)->first();
                 if (!$building) return null;
 
-                $roomId = isset($parts[1])
-                    ? Room::where('room_name', $parts[1])
-                    ->where('building_id', $building->id)
-                    ->value('id')
-                    : null;
+                // Fetch all room IDs for these rooms
+                $roomIds = Room::where('building_id', $building->id)
+                    ->whereIn('room_name', $roomNames)
+                    ->pluck('id')
+                    ->toArray();
+
+                // If no rooms, set room_id null for building-only
+                if (empty($roomIds)) {
+                    return [
+                        'building_id' => $building->id,
+                        'room_ids'    => [null],
+                        'label'       => $block,
+                    ];
+                }
 
                 return [
                     'building_id' => $building->id,
-                    'room_id'     => $roomId,
-                    'label'       => $block, // store original string for display
+                    'room_ids'    => $roomIds,
+                    'label'       => $block,
                 ];
             })
             ->filter();
 
+
+
         foreach ($blocks as $block) {
-            $card->buildings()->attach($block['building_id'], ['room_id' => $block['room_id']]);
+            foreach ($block['room_ids'] as $roomId) {
+                $card->buildings()->attach($block['building_id'], [
+                    'room_id' => $roomId
+                ]);
+            }
         }
+
 
         // 5️⃣ Prepare response
         $user = auth()->user();
@@ -163,7 +182,7 @@ class CardRepository
         return $cards;
     }
 
-
+    //not use
     public function getCardById($id)
     {
         $card = Card::with('user')->find('card_number', $id);
@@ -190,10 +209,10 @@ class CardRepository
             $card->makeHidden('user');
         }
 
-        return $card->toResponse();
+        return $card;
     }
 
-
+    // not use 
     public function getCardByNameAndCardType(string $card_name, ?string $card_type = null)
     {
         $cards = Card::with('user')
@@ -216,12 +235,15 @@ class CardRepository
         return $cards;
     }
 
+    //not use
     public function getAllCardType()
     {
-        return Card::whereNotNull('card_type')
-            ->where('card_type', '!=', '')
-            ->distinct()
-            ->pluck('card_type');
+        $cardType = CardType::all()->pluck('name');
+
+        if ($cardType->isEmpty()) {
+            return false;
+        }
+        return $cardType;
     }
 
 
@@ -238,31 +260,52 @@ class CardRepository
 
     public function updateCard($card_type_id, $card_type, array $data)
     {
-        $card = Card::with('user')
-            ->where('card_type', $card_type)
-            ->where('card_type_id', $card_type_id)
-            ->first();
+        $isCardExist = $this->getCardByIDAndCardType($card_type_id, $card_type);
 
+        if (!$isCardExist) {
+            return false;
+        }
+
+        $card = Card::find($isCardExist['id']);
         if (!$card) {
-            return null; // Card not found
+            return false;
         }
 
+        // 1️⃣ Update card type if provided
+        if (isset($data['card_type'])) {
+            $newCardType = CardType::where('name', $data['card_type'])->first();
+            if ($newCardType) {
+                $card->card_type_id = $newCardType->id;
 
+                // 1a️⃣ Check card_number uniqueness within new card_type
+                $exists = Card::where('card_type_id', $newCardType->id)
+                    ->where('card_number', $card->card_number)
+                    ->where('id', '!=', $card->id)
+                    ->exists();
 
-        // Step 2: Create card with card_type_id
-        $card->card_type = $data['card_type'];
-        $card->card_name = $data['card_name'];
-        $card->block = $data['block'];
-        //Delete old image of card
-        if ($card->profile_image) {
-            Storage::disk('private')->delete($card->profile_image);
+                if ($exists) {
+                    // Assign next available card_number for this card_type
+                    $lastNumber = Card::where('card_type_id', $newCardType->id)->max('card_number') ?? 0;
+                    $card->card_number = $lastNumber + 1;
+                }
+            }
         }
-        // add new card image
+
+        // 2️⃣ Update card name if provided
+        if (isset($data['card_name'])) {
+            $card->card_name = $data['card_name'];
+        }
+
+        // 3️⃣ Update profile image if provided
         if (isset($data['profile_image'])) {
+            if ($card->profile_image) {
+                Storage::disk('private')->delete($card->profile_image);
+            }
+
             $file = $data['profile_image'];
             $extension = $file->getClientOriginalExtension();
-            $sanitizedName = Str::slug($data['card_name']);
-            $filename = "card_type={$card->card_type}-card_type_id={$card->card_type_id}-{$sanitizedName}.{$extension}";
+            $sanitizedName = Str::slug($data['card_name'] ?? $card->card_name);
+            $filename = "card_type={$data['card_type']},card_id={$card->card_number},card_name={$sanitizedName}.{$extension}";
 
             $card->profile_image = $file->storeAs(
                 'cards/profile_images',
@@ -270,42 +313,84 @@ class CardRepository
                 'private'
             );
         }
-        //complete the updated
+
+        // 4️⃣ Update blocks if provided
+        // 4️⃣ Update blocks if provided
+        if (isset($data['block'])) {
+            // Detach existing building-room relationships
+            $card->buildings()->detach();
+
+            $blocks = collect(explode(',', $data['block'] ?? ''))
+                ->map(function ($block) {
+                    $parts = explode('-', $block);
+                    $buildingName = $parts[0];
+                    $roomNames = array_slice($parts, 1); // all rooms after building
+
+                    $building = Building::where('building_name', $buildingName)->first();
+                    if (!$building) return null;
+
+                    // Fetch all room IDs for these rooms
+                    $roomIds = Room::where('building_id', $building->id)
+                        ->whereIn('room_name', $roomNames)
+                        ->pluck('id')
+                        ->toArray();
+
+                    // If no rooms, set room_id null for building-only
+                    if (empty($roomIds)) {
+                        return [
+                            'building_id' => $building->id,
+                            'room_ids'    => [null],
+                            'label'       => $block,
+                        ];
+                    }
+
+                    return [
+                        'building_id' => $building->id,
+                        'room_ids'    => $roomIds,
+                        'label'       => $block,
+                    ];
+                })
+                ->filter();
+
+            foreach ($blocks as $block) {
+                foreach ($block['room_ids'] as $roomId) {
+                    $card->buildings()->attach($block['building_id'], [
+                        'room_id' => $roomId
+                    ]);
+                }
+            }
+        }
+
+
+        // 5️⃣ Save and return
         $card->save();
 
-        //show create by inseat of show all user
-        $card->create_by = $card->user->name;
-        $card->makeHidden('user');
-
-        return $card;
+        return $card->toResponse();
     }
 
 
-    public function deleteCard($card_type_id, $card_type)
-    {
-        $isCardExit = $this->getCardByIDAndCardType($card_type_id, $card_type);
 
-        if (!$isCardExit) {
+
+
+    public function deleteCard($card_type_id, $card_type): bool
+    {
+        $isCardExist = $this->getCardByIDAndCardType($card_type_id, $card_type);
+
+        if (!$isCardExist) {
             return false;
         }
 
-        if ($isCardExit->profile_image) {
-            Storage::disk('private')->delete($isCardExit->profile_image);
+        $card = Card::find($isCardExist['id']);
+
+        if (!$card) {
+            return false;
         }
 
-        $isCardExit->delete();
+        if ($card->profile_image) {
+            Storage::disk('private')->delete($card->profile_image);
+        }
+
+        $card->delete(); // triggers cascade in DB
         return true;
-        // $card = Card::find($cardId);
-
-        // if (!$card) {
-        //     return false;
-        // }
-
-        // if ($card->profile_image) {
-        //     Storage::disk('private')->delete($card->profile_image);
-        // }
-
-        // $card->delete();
-        // return true;
     }
 }

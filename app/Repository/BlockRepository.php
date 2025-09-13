@@ -17,11 +17,19 @@ class BlockRepository
     // Building CRUD -----------------------------
     public function getAllBuildings()
     {
-        $buildings = Building::orderBy('building_name', 'asc')->get();
+        $buildings = Building::with('rooms')->orderBy('building_name', 'asc')->get();
 
-        return $buildings->isEmpty() ? false : $buildings;
-
+        return $buildings->map(function ($building) {
+            return [
+                'building' => $building->building_name,
+                'room' => $building->rooms->pluck('room_name')->toArray(),
+            ];
+        });
     }
+
+
+
+
 
     public function createBuilding($building_name)
     {
