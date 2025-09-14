@@ -171,7 +171,7 @@ class CardRepository
             return [
                 'id'               => $card->id,
                 'card_type_id'     => $card->getFormattedCardNumberAttribute(),
-                'card_type'        => $card->cardType->name ?? null,
+                'card_type'        => strtoupper($card->cardType->name ?? null),
                 'card_name'        => $card->card_name,
                 'block'            => $blockString,
                 'create_by'        => $card->user->name ?? null,
@@ -238,13 +238,20 @@ class CardRepository
     //not use
     public function getAllCardType()
     {
-        $cardType = CardType::all()->pluck('name');
+        $cardTypes = CardType::all();
 
-        if ($cardType->isEmpty()) {
+        if ($cardTypes->isEmpty()) {
             return false;
         }
-        return $cardType;
+
+        return $cardTypes->map(function ($type) {
+            return [
+                'card_type'  => strtoupper($type->name),
+                'count' => $type->cards()->count(), // Count cards by type
+            ];
+        });
     }
+
 
 
     public function getCardImage($cardId)

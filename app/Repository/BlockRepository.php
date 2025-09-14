@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Models\Building;
+use App\Models\CardBuildingRoom;
 use App\Models\Room;
 
 class BlockRepository
@@ -20,12 +21,23 @@ class BlockRepository
         $buildings = Building::with('rooms')->orderBy('building_name', 'asc')->get();
 
         return $buildings->map(function ($building) {
+            // Count distinct card IDs linked to this building
+            $cardCount = CardBuildingRoom::where('building_id', $building->id)
+                ->distinct('card_id') // 🔹 ensure each card is counted once
+                ->count('card_id');
+
             return [
                 'building' => $building->building_name,
-                'room' => $building->rooms->pluck('room_name')->toArray(),
+                'room'     => $building->rooms->pluck('room_name')->toArray(),
+                'count'    => $cardCount, // total cards for this building
             ];
         });
     }
+
+
+
+
+
 
 
 

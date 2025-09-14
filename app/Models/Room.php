@@ -12,4 +12,9 @@ class Room extends Model
     {
         return $this->belongsTo(Building::class);
     }
+
+    public function cards()
+    {
+        return $this->hasMany(CardBuildingRoom::class, 'room_id'); // link pivot table
+    }
 }
