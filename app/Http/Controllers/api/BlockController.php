@@ -103,11 +103,11 @@ class BlockController extends Controller
                 'string',
                 Rule::unique('rooms')->where(fn($query) => $query->where('building_id', $request->building_id)),
             ],
-            'building_id' => 'required|exists:buildings,id',
+            'building_name' => 'required|exists:buildings,building_name',
         ]);
 
         try {
-            $response = $this->blocks_service->createRoom($validated['room_name'], $validated['building_id']);
+            $response = $this->blocks_service->createRoom($validated['room_name'], $validated['building_name']);
             return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
             return response()->json([

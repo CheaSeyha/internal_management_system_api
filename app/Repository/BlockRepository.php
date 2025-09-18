@@ -18,12 +18,14 @@ class BlockRepository
     // Building CRUD -----------------------------
     public function getAllBuildings()
     {
-        $buildings = Building::with('rooms')->orderBy('building_name', 'asc')->get();
+        $buildings = Building::with('rooms')
+            ->latest() // orders by created_at DESC
+            ->get();
 
         return $buildings->map(function ($building) {
             // Count distinct card IDs linked to this building
             $cardCount = CardBuildingRoom::where('building_id', $building->id)
-                ->distinct('card_id') // 🔹 ensure each card is counted once
+                ->distinct('card_id') // ensure each card is counted once
                 ->count('card_id');
 
             return [
@@ -33,6 +35,7 @@ class BlockRepository
             ];
         });
     }
+
 
 
 
@@ -80,28 +83,32 @@ class BlockRepository
     // Building CRUD -----------------------------
 
     // Room CRUD -----------------------------
-    public function createRoom($room_name, $building_id)
+    public function createRoom($room_name, $building_name)
     {
+        // 🔹 Find building by name
+        $building = Building::where('building_name', $building_name)->first();
+
+        if (!$building) {
+            return false; // or throw exception / return custom response
+        }
+
         $addRoom = Room::create([
-            'room_name' => $room_name,
-            'building_id' => $building_id,
+            'room_name'   => $room_name,
+            'building_id' => $building->id, // use ID internally
         ]);
 
         if (!$addRoom) {
             return false;
         }
 
-        // Get building name from relationship
-        $buildingName = $addRoom->building()->value('building_name');
-
-        // Return formatted data as you want
         return [
-            'id' => $addRoom->id,
-            'building_id' => $addRoom->building_id,
-            'building_name' => $buildingName,
-            'room' => $addRoom->room_name,
+            'id'            => $addRoom->id,
+            'building_id'   => $addRoom->building_id,
+            'building_name' => $building->building_name, // from DB
+            'room'          => $addRoom->room_name,
         ];
     }
+
 
 
     public function getAllRooms()
