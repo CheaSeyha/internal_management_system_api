@@ -74,10 +74,10 @@ class CardController extends Controller
             'filter' => 'string|nullable',
             'filterValue' => 'string|nullable',
         ]);
-        
+
 
         try {
-            $response = $this->card_service->cardsFilter($request['card_name'],$request['filter'],$request['filterValue']);
+            $response = $this->card_service->cardsFilter($request['card_name'], $request['filter'], $request['filterValue']);
             return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
             return response()->json([
@@ -171,4 +171,27 @@ class CardController extends Controller
         }
     }
 
+
+    public function createCardType(Request $request)
+    {
+        try {
+            // Validate only required & string; uniqueness handled in service
+            $request->validate([
+                'name' => 'required|string',
+            ]);
+
+            // Call service method
+            $res = $this->card_service->createCardType($request->name);
+
+            // Return JSON using the service response object
+            return response()->json($res->getData(), $res->getStatusCode());
+        } catch (\Throwable $th) {
+            // Handle unexpected errors
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong',
+                'error' => $th->getMessage()
+            ], 500);
+        }
+    }
 }

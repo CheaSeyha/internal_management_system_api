@@ -43,6 +43,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::delete('/card/delete/{type_card_id}/{card_type}', [CardController::class, 'deleteCard']);
     Route::post('/card/edit/{type_card_id}/{card_type}', [CardController::class, 'editCard']);
+    Route::post('/card/createCardType', [CardController::class, 'createCardType']);
     //Cards Routes CRUD
 
     // Building routes

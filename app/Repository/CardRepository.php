@@ -400,4 +400,15 @@ class CardRepository
         $card->delete(); // triggers cascade in DB
         return true;
     }
+
+
+    public function createCardType(string $name): CardType
+    {
+        return CardType::create(['name' => $name]);
+    }
+
+    public function exists(string $name): bool
+    {
+        return CardType::where('name', $name)->exists();
+    }
 }

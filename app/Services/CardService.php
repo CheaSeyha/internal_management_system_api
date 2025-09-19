@@ -37,9 +37,9 @@ class CardService
             : $this->responseHelper->fail('Card not found', null, 404);
     }
 
-    public function getCardByIDAndCardType(int $type_card_id, string $card_type, )
+    public function getCardByIDAndCardType(int $type_card_id, string $card_type,)
     {
-        $card = $this->cardRepository->getCardByIDAndCardType($type_card_id, $card_type, );
+        $card = $this->cardRepository->getCardByIDAndCardType($type_card_id, $card_type,);
 
         return $card
             ? $this->responseHelper->success('Card retrieved successfully', $card, 200)
@@ -108,5 +108,20 @@ class CardService
         return $result
             ? $this->responseHelper->success('All Card Type found', $result, 200)
             : $this->responseHelper->fail('All Card Type not found', null, 404);
+    }
+
+    public function createCardType(string $name)
+    {
+        // Check if card type already exists
+        if ($this->cardRepository->exists($name)) {
+            return $this->responseHelper->fail('Card type already exists', null, 400);
+        }
+
+        // Create new card type
+        $result = $this->cardRepository->createCardType($name);
+
+        return $result
+            ? $this->responseHelper->success('Card type created successfully', $result, 201)
+            : $this->responseHelper->fail('Failed to create card type', null, 500);
     }
 }
