@@ -18,6 +18,7 @@ return new class extends Migration
             $table->bigInteger('role_id')->unsigned()->nullable()->index();
             $table->foreign('role_id')->references('id')->on('roles')->onDelete('set null');
             $table->string('name');
+            $table->string('profile_image')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
