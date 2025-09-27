@@ -5,37 +5,81 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Models\Building;
+use App\Models\Room;
 
 class CardRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true; // Adjust if you want role-based auth
+        return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * Prepare data for validation.
+     * Decode JSON string to array if needed.
      */
+    protected function prepareForValidation()
+    {
+        if ($this->has('block') && is_string($this->block)) {
+            $decoded = json_decode($this->block, true);
+            $this->merge([
+                'block' => is_array($decoded) ? $decoded : [],
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
-            // 🔹 Validate that card_type exists in the card_types table
-            'card_type'     => 'required|string|exists:card_types,name',
-            'card_name'     => 'required|string|max:255',
-            'block'         => 'required|string|',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id'       => 'sometimes|exists:users,id'
+            'card_type'         => 'required|string|exists:card_types,name',
+            'card_name'         => 'required|string|max:255',
+            'block'             => 'required|array|min:1',
+            'block.*.building'  => 'required|string|exists:buildings,building_name',
+            'block.*.rooms'     => 'nullable|array',
+            'block.*.rooms.*'   => 'string',
+            'profile_image'     => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'user_id'           => 'sometimes|exists:users,id',
         ];
     }
 
-    /**
-     * Customize failed validation response
-     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $blocks = $this->input('block', []);
+            if (!is_array($blocks)) {
+                return;
+            }
+
+            foreach ($blocks as $index => $block) {
+                $buildingName = $block['building'] ?? null;
+                $roomNames = $block['rooms'] ?? [];
+
+                $building = Building::where('building_name', $buildingName)->first();
+                if (!$building) {
+                    $validator->errors()->add(
+                        "block.$index.building",
+                        "Building '$buildingName' does not exist."
+                    );
+                    continue;
+                }
+
+                foreach ($roomNames as $roomIndex => $roomName) {
+                    $roomExists = Room::where('building_id', $building->id)
+                        ->where('room_name', $roomName)
+                        ->exists();
+
+                    if (!$roomExists) {
+                        $validator->errors()->add(
+                            "block.$index.rooms.$roomIndex",
+                            "Room '$roomName' does not exist in building '$buildingName'."
+                        );
+                    }
+                }
+            }
+        });
+    }
+
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(
