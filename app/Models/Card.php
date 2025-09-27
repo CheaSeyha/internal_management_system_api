@@ -69,41 +69,39 @@ class Card extends Model
     {
         $user = $this->user;
 
-        // 1️⃣ Group all rooms by building
-        $buildingRooms = [];
+        $blocks = [];
         foreach ($this->buildings as $building) {
             $pivotRoomId = $building->pivot->room_id;
             $roomName = $building->rooms->firstWhere('id', $pivotRoomId)->room_name ?? null;
 
-            if (!isset($buildingRooms[$building->building_name])) {
-                $buildingRooms[$building->building_name] = [];
-            }
-
+            $rooms = [];
             if ($roomName) {
-                $buildingRooms[$building->building_name][] = $roomName;
+                $rooms[] = $roomName;
             }
+
+            $blocks[] = [
+                'building' => $building->building_name,
+                'rooms' => $rooms, // empty array if no rooms
+            ];
         }
 
-        // 2️⃣ Merge rooms per building
-        $mergedBlocks = [];
-        foreach ($buildingRooms as $building => $rooms) {
-            if (empty($rooms)) {
-                $mergedBlocks[] = $building; // building only
+        // Generate combined string for display
+        $blocksString = [];
+        foreach ($blocks as $b) {
+            if (empty($b['rooms'])) {
+                $blocksString[] = $b['building']; // just building name
             } else {
-                // sort rooms numerically/alphabetically if needed
-                sort($rooms);
-                $mergedBlocks[] = $building . '-' . implode('-', $rooms);
+                $blocksString[] = $b['building'] . '-' . implode('-', $b['rooms']); // building-room
             }
         }
-
-        $blockString = implode(',', $mergedBlocks);
 
         return [
             'id'               => $this->id,
             'card_type_id'     => $this->getFormattedCardNumberAttribute(),
-            'card_type'        =>  strtoupper($this->cardType->name ?? ''),
+            'card_type'        => strtoupper($this->cardType->name ?? ''),
             'card_name'        => $this->card_name,
-            'block'            => $blockString, // now merged correctly
+            'block'            => $blocks,            // ✅ raw structured array
+            'blocks_string'    => implode(', ', $blocksString), // ✅ combined string
             'create_by'        => $user->name ?? null,
             'profile_image_url' => $this->profile_image_url,
         ];

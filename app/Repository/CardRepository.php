@@ -158,24 +158,7 @@ class CardRepository
 
         // Transform items in the paginator
         $cards->getCollection()->transform(function ($card) {
-            $blockString = $card->buildings->map(function ($building) {
-                $pivotRoomId = $building->pivot->room_id;
-                $roomName = $building->rooms->firstWhere('id', $pivotRoomId)->room_name ?? null;
-
-                return $roomName
-                    ? "{$building->building_name}-{$roomName}"
-                    : $building->building_name;
-            })->join(', ');
-
-            return [
-                'id'               => $card->id,
-                'card_type_id'     => $card->getFormattedCardNumberAttribute(),
-                'card_type'        => strtoupper($card->cardType->name ?? null),
-                'card_name'        => $card->card_name,
-                'block'            => $blockString,
-                'create_by'        => $card->user->name ?? null,
-                'profile_image_url' => $card->profile_image_url,
-            ];
+            return $card->toResponse();
         });
 
         return $cards;
