@@ -19,7 +19,7 @@ class BlockRepository
     public function getAllBuildings()
     {
         $buildings = Building::with('rooms')
-            ->latest() // orders by created_at DESC
+            ->orderBy('building_name', 'asc') // Sort A-Z
             ->get();
 
         return $buildings->map(function ($building) {
