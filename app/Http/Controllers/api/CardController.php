@@ -71,11 +71,20 @@ class CardController extends Controller
             'card_name' => 'string|nullable',
             'filter' => 'string|nullable',
             'filterValue' => 'string|nullable',
+            'month' => 'integer|nullable',
+            'year' => 'integer|nullable',
         ]);
 
 
         try {
-            $response = $this->card_service->cardsFilter($request['card_name'], $request['filter'], $request['filterValue']);
+            $response = $this->card_service->cardsFilter(
+                $request['card_name'], 
+                $request['filter'], 
+                $request['filterValue'], 
+                $request['month'],
+                $request['year'],
+            
+            );
             return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
             return response()->json([

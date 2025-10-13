@@ -89,10 +89,10 @@ class CardService
             : $this->responseHelper->fail('Card not found', null, 404);
     }
 
-    public function cardsFilter($searchByName, $filter, $filterValue)
+    public function cardsFilter($searchByName, $filter, $filterValue, $month = null, $year = null)
     {
 
-        $result = $this->cardRepository->cardsFilter($searchByName, $filter, $filterValue);
+        $result = $this->cardRepository->cardsFilter($searchByName, $filter, $filterValue, $month, $year);
         // $result = $this->cardRepository->cardsFilter();
 
         return $result

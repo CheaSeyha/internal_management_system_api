@@ -100,9 +100,10 @@ class CardRepository
     {
         // Load cards with relationships
         $cards = Card::with(['user', 'cardType', 'buildings.rooms'])
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
             ->latest()
             ->paginate(17);
-
         // Transform each Card model using toResponse()
         $cards->getCollection()->transform(function ($card) {
             return $card->toResponse();
@@ -113,7 +114,7 @@ class CardRepository
 
 
 
-    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null,)
+    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null,$month = null, $year = null)
     {
         $query = Card::with(['user', 'cardType', 'buildings.rooms'])->latest();
 
@@ -124,9 +125,6 @@ class CardRepository
                     ->orWhere('card_number', $searchByName); // exact match for number
             });
         }
-
-
-
 
         // 🔍 Filter by card type
         if ($filter === 'card_type' && $filterValue) {
@@ -141,6 +139,11 @@ class CardRepository
                 $q->where('building_name', $filterValue);
             });
         }
+
+
+        // 🔍 Automatically filter by current month and year
+        $query->whereMonth('created_at', $month ?? now()->month)
+            ->whereYear('created_at', $year ?? now()->year);
 
         // Paginate results
         $cards = $query->paginate(17);

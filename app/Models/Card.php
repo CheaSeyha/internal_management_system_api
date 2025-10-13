@@ -104,6 +104,7 @@ class Card extends Model
             'blocks_string'    => implode(', ', $blocksString), // ✅ combined string
             'create_by'        => $user->name ?? null,
             'profile_image_url' => $this->profile_image_url,
+            'created_at'        => $this->created_at?->format('d-m-Y'),
         ];
     }
 }
