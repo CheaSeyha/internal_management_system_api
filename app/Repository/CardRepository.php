@@ -14,6 +14,14 @@ use function PHPUnit\Framework\isEmpty;
 
 class CardRepository
 {
+
+    protected $blockRepository;
+
+    public function __construct(BlockRepository $blockRepository)
+    {
+        $this->blockRepository = $blockRepository;
+    }
+
     public function store(array $data)
     {
         // 1️⃣ Get or create CardType
@@ -114,7 +122,7 @@ class CardRepository
 
 
 
-    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null,$month = null, $year = null)
+    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null, $month = null, $year = null)
     {
         $query = Card::with(['user', 'cardType', 'buildings.rooms'])->latest();
 
@@ -164,7 +172,12 @@ class CardRepository
             return $card->toResponse();
         });
 
-        return $cards;
+        // After transforming collection
+        $cardsArray = $cards->toArray();
+        $cardsArray['blocks'] = $this->blockRepository->getAllBuildings($month, $year);
+        $cardsArray['cardTypes'] = $this->getAllCardType($month, $year);
+
+        return $cardsArray;
     }
 
     //not use
@@ -221,21 +234,30 @@ class CardRepository
     }
 
     //not use
-    public function getAllCardType()
+    public function getAllCardType($month = null, $year = null)
     {
+        $month = $month ?? now()->month;
+        $year = $year ?? now()->year;
+
         $cardTypes = CardType::all();
 
         if ($cardTypes->isEmpty()) {
             return false;
         }
 
-        return $cardTypes->map(function ($type) {
+        return $cardTypes->map(function ($type) use ($month, $year) {
+            $count = $type->cards()
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->count();
+
             return [
-                'card_type'  => strtoupper($type->name),
-                'count' => $type->cards()->count(), // Count cards by type
+                'card_type' => strtoupper($type->name),
+                'count' => $count,
             ];
         });
     }
+
 
 
 

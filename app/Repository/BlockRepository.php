@@ -16,25 +16,34 @@ class BlockRepository
         //
     }
     // Building CRUD -----------------------------
-    public function getAllBuildings()
+    public function getAllBuildings($month = null, $year = null)
     {
+        $month = $month ?? now()->month;
+        $year = $year ?? now()->year;
+
         $buildings = Building::with('rooms')
-            ->orderBy('building_name', 'asc') // Sort A-Z
+            ->orderBy('building_name', 'asc')
             ->get();
 
-        return $buildings->map(function ($building) {
-            // Count distinct card IDs linked to this building
+        return $buildings->map(function ($building) use ($month, $year) {
+            // Count distinct card IDs linked to this building for the given month/year
             $cardCount = CardBuildingRoom::where('building_id', $building->id)
-                ->distinct('card_id') // ensure each card is counted once
+                ->whereHas('card', function ($q) use ($month, $year) {
+                    $q->whereMonth('created_at', $month)
+                        ->whereYear('created_at', $year);
+                })
+                ->distinct('card_id')
                 ->count('card_id');
 
             return [
                 'building' => $building->building_name,
                 'room'     => $building->rooms->pluck('room_name')->toArray(),
-                'count'    => $cardCount, // total cards for this building
+                'count'    => $cardCount, // total cards for this building in filtered month/year
             ];
         });
     }
+
+
 
 
 
