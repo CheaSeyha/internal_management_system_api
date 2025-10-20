@@ -140,6 +140,18 @@ class BlockRepository
 
     public function deleteRoom($room_name, $building_id)
     {
+        // If $building_id is not numeric, assume it's actually a building name
+        if (!is_numeric($building_id)) {
+            $building = Building::where('building_name', $building_id)->first();
+
+            if (!$building) {
+                return false;
+            }
+
+            $building_id = $building->id; // overwrite with the real ID
+        }
+
+        // Now use the resolved $building_id
         $room = Room::where('room_name', $room_name)
             ->where('building_id', $building_id)
             ->first();
@@ -151,5 +163,6 @@ class BlockRepository
         $room->delete();
         return true;
     }
+
     // Room CRUD -----------------------------
 }
