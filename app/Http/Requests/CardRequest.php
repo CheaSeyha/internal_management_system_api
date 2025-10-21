@@ -31,17 +31,27 @@ class CardRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'card_type'         => 'required|string|exists:card_types,name',
-            'card_name'         => 'required|string|max:255',
-            'block'             => 'required|array|min:1',
-            'block.*.building'  => 'required|string|exists:buildings,building_name',
-            'block.*.rooms'     => 'nullable|array',
-            'block.*.rooms.*'   => 'string',
-            'profile_image'     => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id'           => 'sometimes|exists:users,id',
+        $rules = [
+            'card_type'     => 'required|string|exists:card_types,name',
+            'card_name'     => 'required|string|max:255',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'user_id'       => 'sometimes|exists:users,id',
         ];
+
+        // Only require block if card_type is NOT rolling
+        if (strtolower($this->input('card_type')) !== 'rolling') {
+            $rules['block'] = 'required|array|min:1';
+            $rules['block.*.building'] = 'required|string|exists:buildings,building_name';
+            $rules['block.*.rooms'] = 'nullable|array';
+            $rules['block.*.rooms.*'] = 'string';
+        } else {
+            // Optional (if you want to accept block=null without errors)
+            $rules['block'] = 'nullable|array';
+        }
+
+        return $rules;
     }
+
 
     public function withValidator($validator)
     {
