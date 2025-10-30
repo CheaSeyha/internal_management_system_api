@@ -6,6 +6,7 @@ use App\Helper\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CardRequest;
 use App\Services\CardService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -78,12 +79,12 @@ class CardController extends Controller
 
         try {
             $response = $this->card_service->cardsFilter(
-                $request['card_name'], 
-                $request['filter'], 
-                $request['filterValue'], 
+                $request['card_name'],
+                $request['filter'],
+                $request['filterValue'],
                 $request['month'],
                 $request['year'],
-            
+
             );
             return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
@@ -198,6 +199,29 @@ class CardController extends Controller
                 'success' => false,
                 'message' => 'Something went wrong',
                 'error' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function cards_summary(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|string',
+            'end_date'   => 'required|string',
+        ]);
+
+        try {
+            // Parse dates to Y-m-d (DB format)
+            $startDate = Carbon::createFromFormat('d-m-Y', $request->start_date)->format('Y-m-d');
+            $endDate   = Carbon::createFromFormat('d-m-Y', $request->end_date)->format('Y-m-d');
+
+            $res = $this->card_service->cards_summary($startDate, $endDate);
+
+            return response()->json($res->getData(), $res->getStatusCode());
+        } catch (\Throwable $th) {
+            return response()->json([
+                'error' => 'Something went wrong',
+                'message' => $th->getMessage()
             ], 500);
         }
     }

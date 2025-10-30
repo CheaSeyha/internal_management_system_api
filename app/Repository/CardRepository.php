@@ -412,4 +412,77 @@ class CardRepository
     {
         return CardType::where('name', $name)->exists();
     }
+
+
+
+    public function cards_summary($start_date, $end_date)
+    {
+        $priceMap = [
+            'CAR CARD'      => 50,
+            'STAFF'         => 20,
+            'CONSTRUCTION'  => 20,
+            'VIP CARD'      => 50,
+            'DELIVERY'      => 80,
+            'ROLLING'       => 5,
+            'TUKTUK'        => 20,
+        ];
+
+        $cards = Card::with('cardType')
+            ->whereDate('created_at', '>=', $start_date)
+            ->whereDate('created_at', '<=', $end_date)
+            ->get();
+
+        // Get all dates in range (even if no cards)
+        $period = \Carbon\CarbonPeriod::create($start_date, $end_date);
+        $dates = collect($period)->map(fn($d) => $d->format('Y-m-d'));
+
+        $chartData = [];
+        foreach ($dates as $date) {
+            $row = ['date' => $date];
+            foreach ($priceMap as $typeName => $price) {
+                $count = $cards->whereBetween('created_at', [$date . ' 00:00:00', $date . ' 23:59:59'])
+                    ->filter(fn($c) => strtoupper($c->cardType->name ?? '') === $typeName)
+                    ->count();
+                $row[$typeName] = $count;
+            }
+            $chartData[] = $row;
+        }
+
+        // Dynamic color assignment
+        $colors = [
+            '#4f46e5',
+            '#ec4899',
+            '#f59e0b',
+            '#10b981',
+            '#3b82f6',
+            '#f43f5e',
+            '#8b5cf6'
+        ];
+        $i = 0;
+        $chartConfig = [];
+        foreach ($priceMap as $typeName => $price) {
+            $chartConfig[$typeName] = [
+                'label' => $typeName,
+                'color' => $colors[$i % count($colors)], // cycle colors if needed
+            ];
+            $i++;
+        }
+
+        $summary = collect($priceMap)->map(function ($price, $typeName) use ($cards) {
+            $count = $cards->filter(fn($c) => strtoupper($c->cardType->name ?? '') === $typeName)->count();
+            return [
+                'moneyAmount' => $count * $price,
+                'cardType'    => $typeName,
+                'cardAmount'  => $count,
+            ];
+        })->values();
+
+        return [
+            "cards_data" => $summary,
+            "ChartAreaInteractive" => [
+                "data" => $chartData,
+                "config" => $chartConfig,
+            ]
+        ];
+    }
 }

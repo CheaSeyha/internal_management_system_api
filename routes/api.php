@@ -30,20 +30,22 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     //Cards Routes CRUD
-    Route::post('/create_card', [CardController::class, 'create_card']);
-    Route::get('/cards', [CardController::class, 'getAllCards']);
-    Route::get('/cards/get_all_card_type', [CardController::class, 'getAllCardType']);
-    //Specific card search 
-    Route::post('/card/search', [CardController::class, 'searchCard']);
-    //General card search name card_type_id block 
-    Route::post(
-        '/card/cards_filter',
-        [CardController::class, 'cardsFilter']
-    );
 
-    Route::delete('/card/delete/{type_card_id}/{card_type}', [CardController::class, 'deleteCard']);
-    Route::post('/card/edit/{type_card_id}/{card_type}', [CardController::class, 'editCard']);
-    Route::post('/card/createCardType', [CardController::class, 'createCardType']);
+        Route::post('/cards_summary', [CardController::class, 'cards_summary']);
+        Route::post('/create_card', [CardController::class, 'create_card']);
+        Route::get('/cards', [CardController::class, 'getAllCards']);
+        Route::get('/cards/get_all_card_type', [CardController::class, 'getAllCardType']);
+        //Specific card search 
+        Route::post('/card/search', [CardController::class, 'searchCard']);
+        //General card search name card_type_id block 
+        Route::post(
+            '/card/cards_filter',
+            [CardController::class, 'cardsFilter']
+        );
+
+        Route::delete('/card/delete/{type_card_id}/{card_type}', [CardController::class, 'deleteCard']);
+        Route::post('/card/edit/{type_card_id}/{card_type}', [CardController::class, 'editCard']);
+        Route::post('/card/createCardType', [CardController::class, 'createCardType']);
     //Cards Routes CRUD
 
     // Building routes

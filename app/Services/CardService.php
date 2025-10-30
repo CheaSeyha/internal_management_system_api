@@ -124,4 +124,13 @@ class CardService
             ? $this->responseHelper->success('Card type created successfully', $result, 201)
             : $this->responseHelper->fail('Failed to create card type', null, 500);
     }
+    public function cards_summary($start_date, $end_Date)
+    {
+        // Create new card type
+        $result = $this->cardRepository->cards_summary($start_date, $end_Date);
+
+        return $result
+            ? $this->responseHelper->success('Card type created successfully', $result, 201)
+            : $this->responseHelper->fail('Failed to create card type', null, 500);
+    }
 }
