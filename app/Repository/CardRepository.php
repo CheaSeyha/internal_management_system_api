@@ -424,7 +424,7 @@ class CardRepository
             'VIP CARD'      => 50,
             'DELIVERY'      => 80,
             'ROLLING'       => 5,
-            'TUKTUK'        => 20,
+            'TUKTUK'        => 80,
         ];
 
         $cards = Card::with(['cardType', 'user'])

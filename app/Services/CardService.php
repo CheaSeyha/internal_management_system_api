@@ -124,13 +124,26 @@ class CardService
             ? $this->responseHelper->success('Card type created successfully', $result, 201)
             : $this->responseHelper->fail('Failed to create card type', null, 500);
     }
-    public function cards_summary($start_date, $end_Date)
+    public function cards_summary($start_date, $end_date)
     {
-        // Create new card type
-        $result = $this->cardRepository->cards_summary($start_date, $end_Date);
+        // Convert to Carbon instances
+        $start = \Carbon\Carbon::parse($start_date);
+        $end = \Carbon\Carbon::parse($end_date);
+
+        // Check if the range exceeds 1 year
+        if ($start->diffInDays($end) > 365) {
+            return $this->responseHelper->fail(
+                'Max date range is 1 year.',
+                null,
+                400 // Bad request
+            );
+        }
+
+        // Call repository after validation
+        $result = $this->cardRepository->cards_summary($start_date, $end_date);
 
         return $result
-            ? $this->responseHelper->success('Card type created successfully', $result, 201)
-            : $this->responseHelper->fail('Failed to create card type', null, 500);
+            ? $this->responseHelper->success('Card summary fetched successfully', $result, 200)
+            : $this->responseHelper->fail('Failed to fetch card summary', null, 500);
     }
 }
