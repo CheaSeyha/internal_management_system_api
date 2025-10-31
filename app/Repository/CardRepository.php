@@ -427,47 +427,76 @@ class CardRepository
             'TUKTUK'        => 20,
         ];
 
-        $cards = Card::with('cardType')
+        $cards = Card::with(['cardType', 'user'])
             ->whereDate('created_at', '>=', $start_date)
             ->whereDate('created_at', '<=', $end_date)
             ->get();
 
-        // Get all dates in range (even if no cards)
+        // Get all dates in range
         $period = \Carbon\CarbonPeriod::create($start_date, $end_date);
         $dates = collect($period)->map(fn($d) => $d->format('Y-m-d'));
 
-        $chartData = [];
+        // -------------------------------
+        // 📊 ChartAreaInteractive (by card type)
+        // -------------------------------
+        $chartDataArea = [];
         foreach ($dates as $date) {
             $row = ['date' => $date];
             foreach ($priceMap as $typeName => $price) {
-                $count = $cards->whereBetween('created_at', [$date . ' 00:00:00', $date . ' 23:59:59'])
+                $count = $cards
+                    ->whereBetween('created_at', [$date . ' 00:00:00', $date . ' 23:59:59'])
                     ->filter(fn($c) => strtoupper($c->cardType->name ?? '') === $typeName)
                     ->count();
                 $row[$typeName] = $count;
             }
-            $chartData[] = $row;
+            $chartDataArea[] = $row;
         }
 
-        // Dynamic color assignment
-        $colors = [
-            '#4f46e5',
-            '#ec4899',
-            '#f59e0b',
-            '#10b981',
-            '#3b82f6',
-            '#f43f5e',
-            '#8b5cf6'
-        ];
+        $colors = ['#80bfff', '#d24dff', '#f59e0b', '#ff99cc', '#66ccff', '#ff0066', '#66ff33'];
         $i = 0;
-        $chartConfig = [];
+        $chartConfigArea = [];
         foreach ($priceMap as $typeName => $price) {
-            $chartConfig[$typeName] = [
+            $chartConfigArea[$typeName] = [
                 'label' => $typeName,
-                'color' => $colors[$i % count($colors)], // cycle colors if needed
+                'color' => $colors[$i % count($colors)],
             ];
             $i++;
         }
 
+        // -------------------------------
+        // 🧑‍💻 ChartBarInteractive (by user)
+        // -------------------------------
+        $users = $cards->pluck('user')->filter()->unique('id')->values();
+
+        $chartDataBar = [];
+        foreach ($dates as $date) {
+            $row = ['date' => $date];
+
+            foreach ($users as $user) {
+                $count = $cards
+                    ->where('user_id', $user->id)
+                    ->whereBetween('created_at', [$date . ' 00:00:00', $date . ' 23:59:59'])
+                    ->count();
+
+                $row[$user->name] = $count;
+            }
+
+            $chartDataBar[] = $row;
+        }
+
+        // Generate dynamic color config for users
+        $userColors = ['#80bfff', '#d24dff', '#f59e0b', '#ff99cc', '#66ccff', '#ff0066', '#66ff33'];
+        $chartConfigBar = [];
+        foreach ($users as $index => $user) {
+            $chartConfigBar[$user->name] = [
+                'label' => $user->name,
+                'color' => $userColors[$index % count($userColors)],
+            ];
+        }
+
+        // -------------------------------
+        // 💰 Summary Data
+        // -------------------------------
         $summary = collect($priceMap)->map(function ($price, $typeName) use ($cards) {
             $count = $cards->filter(fn($c) => strtoupper($c->cardType->name ?? '') === $typeName)->count();
             return [
@@ -477,12 +506,19 @@ class CardRepository
             ];
         })->values();
 
+        // -------------------------------
+        // 🧩 Return all data
+        // -------------------------------
         return [
             "cards_data" => $summary,
             "ChartAreaInteractive" => [
-                "data" => $chartData,
-                "config" => $chartConfig,
-            ]
+                "data" => $chartDataArea,
+                "config" => $chartConfigArea,
+            ],
+            "ChartBarInteractive" => [
+                "summaryData" => $chartDataBar,
+                "config" => $chartConfigBar,
+            ],
         ];
     }
 }
