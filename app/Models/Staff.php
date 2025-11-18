@@ -6,6 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Staff extends Model
 {
+    protected $fillable = [
+        'first_name',
+        'last_name',
+        'email',
+        'phone_number',
+        'position_id',
+        'department_id',
+        'status',
+        'date_of_joining',
+        'date_of_birth',
+        'profile_picture',
+    ];
     public function position()
     {
         return $this->belongsTo(Position::class);

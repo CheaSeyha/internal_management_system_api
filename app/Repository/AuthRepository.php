@@ -46,6 +46,7 @@ class AuthRepository
         $createdUser = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
+            'role_id' => $data['role_id'],
             'profile_image' => $profileImagePath,
             'password' => bcrypt($data['password']),
         ]);
