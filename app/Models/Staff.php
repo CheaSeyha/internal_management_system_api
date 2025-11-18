@@ -18,6 +18,11 @@ class Staff extends Model
         'date_of_birth',
         'profile_picture',
     ];
+
+    protected $hidden = [
+        'position_id',
+        'department_id',
+    ];
     public function position()
     {
         return $this->belongsTo(Position::class);

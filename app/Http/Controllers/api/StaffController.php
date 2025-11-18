@@ -27,7 +27,7 @@ class StaffController extends Controller
             "role_name" => "required | string",
             "position_name" => "required | string",
             "department_name" => "required | string",
-            "status" => "required | string",
+            "status" => "nullable | string",
             "date_of_birth" => "required | date",
             'email' => 'required|email|max:255|unique:staff,email',
             'password' => 'required|string|min:8',

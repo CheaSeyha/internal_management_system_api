@@ -210,7 +210,7 @@ class CardRepository
         return $card;
     }
 
-    // not use 
+    // not use
     public function getCardByNameAndCardType(string $card_name, ?string $card_type = null)
     {
         $cards = Card::with('user')

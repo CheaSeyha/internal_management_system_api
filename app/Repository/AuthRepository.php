@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+
 class AuthRepository
 {
     /**
@@ -25,7 +26,6 @@ class AuthRepository
     public function createUser($data)
     {
         $profileImagePath = null;
-
         if (isset($data['profile_image'])) {
             $file = $data['profile_image'];
 
@@ -45,6 +45,7 @@ class AuthRepository
 
         $createdUser = User::create([
             'name' => $data['name'],
+            'staff_id' => $data['staff_id'],
             'email' => $data['email'],
             'role_id' => $data['role_id'],
             'profile_image' => $profileImagePath,

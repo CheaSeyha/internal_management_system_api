@@ -60,7 +60,7 @@ class StaffService
             $role_id = $getRoleId->id;
         }
 
-        $result = $this->staffRepository->add_staff($staff_data, $department_id, $position_id,$role_id);
+        $result = $this->staffRepository->add_staff($staff_data, $department_id, $position_id, $role_id);
 
         return $result
             ? $this->responseHelper->success('New Staff Added Successfully', $result, 200)
