@@ -4,8 +4,10 @@ namespace App\Http\Controllers\api;
 
 use App\Helper\ResponseHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Staff;
 use App\Services\StaffService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class StaffController extends Controller
 {
@@ -20,6 +22,7 @@ class StaffController extends Controller
 
     public function addNewStaff(Request $request)
     {
+
         $validate = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -31,7 +34,7 @@ class StaffController extends Controller
             "date_of_birth" => "required | date",
             'email' => 'required|email|max:255|unique:staff,email',
             'password' => 'required|string|min:8',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // for createa user profile
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // for createa user profile
         ]);
 
         try {
@@ -44,5 +47,37 @@ class StaffController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function getAllStaff()
+    {
+        try {
+            $response = $this->staffService->getAllStaff();
+
+            return response()->json($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Can not add new staff',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function getProfileImage($id)
+    {
+        $staff = Staff::findOrFail($id);
+
+        if (!$staff->profile_picture) {
+            return response()->json(['message' => 'No profile picture'], 404);
+        }
+
+        $path = $staff->profile_picture;
+
+        if (!Storage::disk('private')->exists($path)) {
+            return response()->json(['message' => 'File missing'], 404);
+        }
+
+        return Storage::disk('private')->response($path);
     }
 }

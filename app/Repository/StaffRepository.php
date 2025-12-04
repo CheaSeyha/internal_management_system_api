@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\Position;
 use App\Models\Staff;
 use App\Repository\AuthRepository;   // <-- import it
+use Illuminate\Support\Str;
 
 use function Symfony\Component\Clock\now;
 
@@ -22,6 +23,9 @@ class StaffRepository
     {
         // 1️⃣ Create staff record
 
+
+
+
         $staff = Staff::create([
             'first_name'      => $staff_data['first_name'],
             'last_name'       => $staff_data['last_name'],
@@ -30,10 +34,36 @@ class StaffRepository
             'position_id'     => $position_id,
             'department_id'   => $department_id,
             'status'          => $staff_data['status'],
-            'date_of_joining' => now(),
+            'date_of_joining' => today(),
             'date_of_birth'   => $staff_data['date_of_birth'],
-            'profile_picture' => $staff_data['profile_picture'] ?? null,
+
         ]);
+
+
+        if (isset($staff_data['profile_picture'])) {
+            $file = $staff_data['profile_picture'];
+
+            // Get safe extension
+            $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg';
+
+            // Create safe filename
+            $filename = 'staff_' .
+                Str::slug($staff_data['first_name'] . '_' . $staff_data['last_name']) .
+                '.' . $extension;
+
+            // Store file
+            $path = $file->storeAs(
+                'staff/profile_pictures',
+                $filename,
+                'private'
+            );
+
+            // Save result
+            $staff->profile_picture = $path;
+        }
+
+
+        $staff->save();
 
         // 2️⃣ Create linked User account
         $createdUser = $this->authRepo->createUser([
@@ -49,6 +79,10 @@ class StaffRepository
         $staff->load([
             'department:id,department_name', // only select id and name
             'position:id,position_name'
+        ]);
+
+        $createdUser->load([
+            'role:id,role_name'
         ]);
 
         // 4️⃣ Prepare return data

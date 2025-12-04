@@ -7,6 +7,7 @@ use App\Models\Dayoff;
 use App\Models\Department;
 use App\Models\Position;
 use App\Models\Role;
+use App\Models\Staff;
 use App\Repository\StaffRepository;
 
 class StaffService
@@ -65,5 +66,20 @@ class StaffService
         return $result
             ? $this->responseHelper->success('New Staff Added Successfully', $result, 200)
             : $this->responseHelper->fail('Failed to add mew staff add', null, 500);
+    }
+
+    public function getAllStaff()
+    {
+        $staff_data = Staff::all()->map(function ($staff) {
+            $staff->profile_picture_url = $staff->profile_picture
+                ? url('/staff/image_profile/' . $staff->id)   // secure image endpoint
+                : null;
+
+            return $staff;
+        });
+
+        return $staff_data
+            ? $this->responseHelper->success('Get All Staff', $staff_data, 200)
+            : $this->responseHelper->fail('Failed to get staff data', null, 500);
     }
 }
