@@ -3,6 +3,7 @@
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\BlockController;
 use App\Http\Controllers\api\CardController;
+use App\Http\Controllers\api\ISPController;
 use App\Http\Controllers\api\StaffController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -62,10 +63,10 @@ Route::middleware(['auth:api'])->group(function () {
 
     //ISP Routes
     Route::prefix('isp')->group(function () {
-        Route::get('/all_isps', [CardController::class, 'getAllISPs']);
-        Route::post('/add_isp', [CardController::class, 'addISP']);
-        Route::put('/update_isp/{isp_id}', [CardController::class, 'updateISP']);
-        Route::delete('/delete_isp/{isp_id}', [CardController::class, 'deleteISP']);
+        Route::get('/all_isps', [ISPController::class, 'getAllISPs']);
+        Route::post('/add_isp', [ISPController::class, 'addISP']);
+        Route::put('/update_isp/{isp_id}', [ISPController::class, 'updateISP']);
+        Route::delete('/delete_isp/{isp_id}', [ISPController::class, 'deleteISP']);
     });
 
     //Staff Routes
