@@ -99,19 +99,23 @@ class Card extends Model
         }
 
         return [
-            'id'               => $this->id,
-            'card_type_id'     => $this->getFormattedCardNumberAttribute(),
-            'card_type'        => strtoupper($this->cardType->name ?? ''),
-            'card_name'        => $this->card_name,
-            'block'            => $blocks,            // ✅ raw structured array
-            'blocks_string'    => implode(', ', $blocksString), // ✅ combined string
-            'create_by'        => $user->name ?? null,
+            'id' => $this->id,
+            'card_type_id' => $this->getFormattedCardNumberAttribute(),
+            'card_type' => strtoupper($this->cardType->name ?? ''),
+            'card_name' => $this->card_name,
+            'isp_name' => $this->isp?->isp_name, // safe access
+            'isp_position' => $this->isp_position ?? null, // safe access
+            'rolling_link' => $this->rolling_link ?? null, // safe access
+            'block' => $blocks,            // ✅ raw structured array
+            'blocks_string' => implode(', ', $blocksString), // ✅ combined string
+            'create_by' => $user->name ?? null,
             'profile_image_url' => $this->profile_image_url,
-            'created_at'        => $this->created_at?->format('d/m/Y H:i'),
+            'created_at' => $this->created_at?->format('d/m/Y H:i'),
         ];
     }
 
-    public function isp(){
-        return $this->belongsTo(Isp::class,'isp_id');
+    public function isp()
+    {
+        return $this->belongsTo(Isp::class, 'isp_id');
     }
 }
