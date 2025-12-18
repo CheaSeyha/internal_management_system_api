@@ -16,6 +16,9 @@ class Card extends Model
         'block',
         'profile_image',
         'user_id',
+        'isp_id',
+        'isp_position',
+        'rolling_link'
     ];
 
     protected $hidden = [
@@ -106,5 +109,9 @@ class Card extends Model
             'profile_image_url' => $this->profile_image_url,
             'created_at'        => $this->created_at?->format('d/m/Y H:i'),
         ];
+    }
+
+    public function isp(){
+        return $this->belongsTo(Isp::class,'isp_id');
     }
 }

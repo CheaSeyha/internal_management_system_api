@@ -39,6 +39,18 @@ class CardRepository
             'card_name'    => $data['card_name'],
             'user_id'      => auth()->id(),
         ]);
+
+        if ($data['card_type'] === 'isp') {
+            $card->isp_id = $data['isp_id']->id;
+            $card->isp_position = $data['isp_position'];
+        }
+
+        if ($data['card_type'] === 'rolling') {
+            $card->rolling_link = $data['link'];
+        }
+
+
+
         // Store iamge if provided
         if (isset($data['profile_image'])) {
             $file = $data['profile_image'];

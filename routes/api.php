@@ -60,6 +60,14 @@ Route::middleware(['auth:api'])->group(function () {
     Route::delete('/blocks/delete_room/{room_name}/{building_id}', [BlockController::class, 'deleteRoom']);
 
 
+    //ISP Routes
+    Route::prefix('isp')->group(function () {
+        Route::get('/all_isps', [CardController::class, 'getAllISPs']);
+        Route::post('/add_isp', [CardController::class, 'addISP']);
+        Route::put('/update_isp/{isp_id}', [CardController::class, 'updateISP']);
+        Route::delete('/delete_isp/{isp_id}', [CardController::class, 'deleteISP']);
+    });
+
     //Staff Routes
     Route::prefix('staff')->group(function () {
 
@@ -74,8 +82,6 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     //Staff Routes
-
-
     Route::get('/cards/{id}/image', [CardController::class, 'getImage'])
         ->name('api.cards.image');
 });

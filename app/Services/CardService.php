@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helper\ResponseHelper;
+use App\Models\Isp;
 use App\Repository\CardRepository;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,6 +20,12 @@ class CardService
 
     public function createCard(array $data)
     {
+        // get ISP ID
+        if ($data['card_type'] === 'isp') {
+            $getIspID = Isp::where('isp_name', $data['isp_name'])->first();
+            $data['isp_id'] = $getIspID;
+        }
+
         $card = $this->cardRepository->store($data);
         return $this->responseHelper->success('Card created successfully', $card, 201);
     }

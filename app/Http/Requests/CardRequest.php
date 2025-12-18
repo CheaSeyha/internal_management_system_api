@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Models\Building;
+use App\Models\Isp;
 use App\Models\Room;
 
 class CardRequest extends FormRequest
@@ -38,15 +39,22 @@ class CardRequest extends FormRequest
             'user_id'       => 'sometimes|exists:users,id',
         ];
 
-        // Only require block if card_type is NOT rolling
-        if (strtolower($this->input('card_type')) !== 'rolling') {
-            $rules['block'] = 'required|array|min:1';
-            $rules['block.*.building'] = 'required|string|exists:buildings,building_name';
-            $rules['block.*.rooms'] = 'nullable|array';
-            $rules['block.*.rooms.*'] = 'string';
-        } else {
-            // Optional (if you want to accept block=null without errors)
-            $rules['block'] = 'nullable|array';
+        if ($this->input('card_type') === 'isp') {
+            $rules['isp_name'] = [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (!Isp::where('isp_name', $value)->exists()) {
+                        $fail('The selected ISP does not exist.');
+                    }
+                }
+            ];
+
+            $rules['isp_position'] = 'required|string|max:255';
+        }
+        if ($this->input('card_type') === 'rolling') {
+            $rules['link'] = 'required|string|max:255';
         }
 
         return $rules;
