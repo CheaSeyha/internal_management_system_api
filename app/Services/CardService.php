@@ -20,11 +20,6 @@ class CardService
 
     public function createCard(array $data)
     {
-        // get ISP ID
-        if ($data['card_type'] === 'isp') {
-            $getIspID = Isp::where('isp_name', $data['isp_name'])->first();
-            $data['isp_id'] = $getIspID;
-        }
 
         $card = $this->cardRepository->store($data);
         return $this->responseHelper->success('Card created successfully', $card, 201);
@@ -44,9 +39,9 @@ class CardService
             : $this->responseHelper->fail('Card not found', null, 404);
     }
 
-    public function getCardByIDAndCardType(int $type_card_id, string $card_type,)
+    public function getCardByIDAndCardType(int $type_card_id, string $card_type, )
     {
-        $card = $this->cardRepository->getCardByIDAndCardType($type_card_id, $card_type,);
+        $card = $this->cardRepository->getCardByIDAndCardType($type_card_id, $card_type, );
 
         return $card
             ? $this->responseHelper->success('Card retrieved successfully', $card, 200)

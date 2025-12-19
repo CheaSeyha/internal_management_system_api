@@ -49,7 +49,7 @@ class CardRequest extends FormRequest
 
         $rules['block'] = 'nullable';
 
-        if ($this->input('card_type') === 'isp') {
+        if (strtolower($this->input('card_type')) === 'isp') {
             $rules['isp_name'] = [
                 'required',
                 'string',
@@ -63,7 +63,7 @@ class CardRequest extends FormRequest
 
             $rules['isp_position'] = 'required|string|max:255';
         }
-        if ($this->input('card_type') === 'rolling') {
+        if (strtolower($this->input('card_type')) === 'rolling') {
             $rules['link'] = 'required|string|max:255';
         }
 

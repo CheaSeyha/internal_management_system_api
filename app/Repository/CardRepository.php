@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Models\Building;
 use App\Models\Card;
 use App\Models\CardType;
+use App\Models\Isp;
 use App\Models\Room;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -35,17 +36,17 @@ class CardRepository
         // 3️⃣ Create card
         $card = Card::create([
             'card_type_id' => $cardType->id,
-            'card_number'  => $nextNumber,
-            'card_name'    => $data['card_name'],
-            'user_id'      => auth()->id(),
+            'card_number' => $nextNumber,
+            'card_name' => $data['card_name'],
+            'user_id' => auth()->id(),
         ]);
 
-        if ($data['card_type'] === 'isp') {
-            $card->isp_id = $data['isp_id']->id;
+        if (strtolower($data['card_type']) === 'isp') {
+            $card->isp_id = Isp::where('isp_name', $data['isp_name'])->first()->id;
             $card->isp_position = $data['isp_position'];
         }
 
-        if ($data['card_type'] === 'rolling') {
+        if (strtolower($data['card_type']) === 'rolling') {
             $card->rolling_link = $data['link'];
         }
 
@@ -72,7 +73,8 @@ class CardRepository
                 $roomNames = $block['rooms'] ?? [];
 
                 $building = Building::where('building_name', $buildingName)->first();
-                if (!$building) return null;
+                if (!$building)
+                    return null;
 
                 $roomIds = Room::where('building_id', $building->id)
                     ->whereIn('room_name', $roomNames)
@@ -83,15 +85,15 @@ class CardRepository
                 if (empty($roomIds)) {
                     return [
                         'building_id' => $building->id,
-                        'room_ids'    => [null],
-                        'label'       => $buildingName,
+                        'room_ids' => [null],
+                        'label' => $buildingName,
                     ];
                 }
 
                 return [
                     'building_id' => $building->id,
-                    'room_ids'    => $roomIds,
-                    'label'       => $buildingName . '-' . implode('-', $roomNames),
+                    'room_ids' => $roomIds,
+                    'label' => $buildingName . '-' . implode('-', $roomNames),
                 ];
             })
             ->filter();
@@ -288,10 +290,12 @@ class CardRepository
     {
         // 1️⃣ Find the existing card
         $isCardExist = $this->getCardByIDAndCardType($card_type_id, $card_type);
-        if (!$isCardExist) return false;
+        if (!$isCardExist)
+            return false;
 
         $card = Card::find($isCardExist['id']);
-        if (!$card) return false;
+        if (!$card)
+            return false;
 
         // 2️⃣ Update card type if provided
         if (isset($data['card_type'])) {
@@ -348,7 +352,8 @@ class CardRepository
                     $roomNames = $block['rooms'] ?? [];
 
                     $building = Building::where('building_name', $buildingName)->first();
-                    if (!$building) return null;
+                    if (!$building)
+                        return null;
 
                     $roomIds = Room::where('building_id', $building->id)
                         ->whereIn('room_name', $roomNames)
@@ -358,13 +363,13 @@ class CardRepository
                     if (empty($roomIds)) {
                         return [
                             'building_id' => $building->id,
-                            'room_ids'    => [null],
+                            'room_ids' => [null],
                         ];
                     }
 
                     return [
                         'building_id' => $building->id,
-                        'room_ids'    => $roomIds,
+                        'room_ids' => $roomIds,
                     ];
                 })
                 ->filter();
@@ -430,13 +435,13 @@ class CardRepository
     public function cards_summary($start_date, $end_date)
     {
         $priceMap = [
-            'CAR CARD'      => 50,
-            'STAFF'         => 20,
-            'CONSTRUCTION'  => 20,
-            'VIP CARD'      => 50,
-            'DELIVERY'      => 80,
-            'ROLLING'       => 5,
-            'TUKTUK'        => 80,
+            'CAR CARD' => 50,
+            'STAFF' => 20,
+            'CONSTRUCTION' => 20,
+            'VIP CARD' => 50,
+            'DELIVERY' => 80,
+            'ROLLING' => 5,
+            'TUKTUK' => 80,
         ];
 
         $cards = Card::with(['cardType', 'user'])
@@ -513,8 +518,8 @@ class CardRepository
             $count = $cards->filter(fn($c) => strtoupper($c->cardType->name ?? '') === $typeName)->count();
             return [
                 'moneyAmount' => $count * $price,
-                'cardType'    => $typeName,
-                'cardAmount'  => $count,
+                'cardType' => $typeName,
+                'cardAmount' => $count,
             ];
         })->values();
 
