@@ -33,11 +33,21 @@ class CardRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'card_type'     => 'required|string|exists:card_types,name',
-            'card_name'     => 'required|string|max:255',
+            'card_type' => 'required|string|exists:card_types,name',
+            'card_name' => 'required|string|max:255',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id'       => 'sometimes|exists:users,id',
+            'user_id' => 'sometimes|exists:users,id',
         ];
+
+
+        if ($this->input('card_type') !== 'isp' || $this->input('card_type') !== 'rolling') {
+            $rules['block'] = 'required|array|min:1';
+            $rules['block.*.building'] = 'required|string|exists:buildings,building_name';
+            $rules['block.*.rooms'] = 'nullable|array';
+            $rules['block.*.rooms.*'] = 'string';
+        }
+
+        $rules['block'] = 'nullable';
 
         if ($this->input('card_type') === 'isp') {
             $rules['isp_name'] = [
@@ -104,7 +114,7 @@ class CardRequest extends FormRequest
             response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors'  => $validator->errors(),
+                'errors' => $validator->errors(),
             ], 422)
         );
     }
