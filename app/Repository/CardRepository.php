@@ -436,106 +436,151 @@ class CardRepository
     {
         $priceMap = [
             'CAR CARD' => 50,
-            'STAFF' => 20,
-            'CONSTRUCTION' => 20,
             'VIP CARD' => 50,
             'DELIVERY' => 80,
+            'STAFF' => 20,
+            'ISP' => 20,
             'ROLLING' => 5,
-            'TUKTUK' => 80,
+            'CONSTRUCTION' => 20,
+
         ];
 
-        $cards = Card::with(['cardType', 'user'])
-            ->whereDate('created_at', '>=', $start_date)
-            ->whereDate('created_at', '<=', $end_date)
-            ->get();
+        /* ---------------------------------
+         * Date range
+         * --------------------------------- */
+        $dates = collect(
+            \Carbon\CarbonPeriod::create($start_date, $end_date)
+        )->map(fn($d) => $d->format('Y-m-d'));
 
-        // Get all dates in range
-        $period = \Carbon\CarbonPeriod::create($start_date, $end_date);
-        $dates = collect($period)->map(fn($d) => $d->format('Y-m-d'));
+        /* ---------------------------------
+         * Card types
+         * --------------------------------- */
+        $cardTypes = \App\Models\CardType::select('id', 'name')
+            ->get()
+            ->mapWithKeys(fn($t) => [strtoupper($t->name) => $t->id]);
 
-        // -------------------------------
-        // 📊 ChartAreaInteractive (by card type)
-        // -------------------------------
+        /* ---------------------------------
+         * Aggregate by DATE + CARD TYPE
+         * --------------------------------- */
+        $typeStats = \App\Models\Card::selectRaw('
+            DATE(created_at) as date,
+            card_type_id,
+            COUNT(*) as total
+        ')
+            ->whereBetween('created_at', [$start_date, $end_date])
+            ->groupBy('date', 'card_type_id')
+            ->get()
+            ->groupBy('date');
+
+        /* ---------------------------------
+         * ChartAreaInteractive (FIXED)
+         * --------------------------------- */
         $chartDataArea = [];
+
         foreach ($dates as $date) {
             $row = ['date' => $date];
+
             foreach ($priceMap as $typeName => $price) {
-                $count = $cards
-                    ->whereBetween('created_at', [$date . ' 00:00:00', $date . ' 23:59:59'])
-                    ->filter(fn($c) => strtoupper($c->cardType->name ?? '') === $typeName)
-                    ->count();
-                $row[$typeName] = $count;
+                $typeId = $cardTypes[$typeName] ?? null;
+
+                $row[$typeName] = ($typeStats[$date] ?? collect())
+                    ->firstWhere('card_type_id', $typeId)
+                    ->total ?? 0;
             }
+
             $chartDataArea[] = $row;
         }
 
         $colors = ['#80bfff', '#d24dff', '#f59e0b', '#ff99cc', '#66ccff', '#ff0066', '#66ff33'];
-        $i = 0;
         $chartConfigArea = [];
-        foreach ($priceMap as $typeName => $price) {
+
+        foreach (array_keys($priceMap) as $i => $typeName) {
             $chartConfigArea[$typeName] = [
                 'label' => $typeName,
                 'color' => $colors[$i % count($colors)],
             ];
-            $i++;
         }
 
-        // -------------------------------
-        // 🧑‍💻 ChartBarInteractive (by user)
-        // -------------------------------
-        $users = $cards->pluck('user')->filter()->unique('id')->values();
+        /* ---------------------------------
+         * Aggregate by DATE + USER
+         * --------------------------------- */
+        $userStats = \App\Models\Card::selectRaw('
+            DATE(created_at) as date,
+            user_id,
+            COUNT(*) as total
+        ')
+            ->whereBetween('created_at', [$start_date, $end_date])
+            ->groupBy('date', 'user_id')
+            ->get()
+            ->groupBy('date');
 
+        $users = \App\Models\User::whereIn(
+            'id',
+            \App\Models\Card::whereBetween('created_at', [$start_date, $end_date])
+                ->distinct()
+                ->pluck('user_id')
+        )->get();
+
+        /* ---------------------------------
+         * ChartBarInteractive (FIXED)
+         * --------------------------------- */
         $chartDataBar = [];
+
         foreach ($dates as $date) {
             $row = ['date' => $date];
 
             foreach ($users as $user) {
-                $count = $cards
-                    ->where('user_id', $user->id)
-                    ->whereBetween('created_at', [$date . ' 00:00:00', $date . ' 23:59:59'])
-                    ->count();
-
-                $row[$user->name] = $count;
+                $row[$user->name] = ($userStats[$date] ?? collect())
+                    ->firstWhere('user_id', $user->id)
+                    ->total ?? 0;
             }
 
             $chartDataBar[] = $row;
         }
 
-        // Generate dynamic color config for users
-        $userColors = ['#80bfff', '#d24dff', '#f59e0b', '#ff99cc', '#66ccff', '#ff0066', '#66ff33'];
         $chartConfigBar = [];
-        foreach ($users as $index => $user) {
+        foreach ($users as $i => $user) {
             $chartConfigBar[$user->name] = [
                 'label' => $user->name,
-                'color' => $userColors[$index % count($userColors)],
+                'color' => $colors[$i % count($colors)],
             ];
         }
 
-        // -------------------------------
-        // 💰 Summary Data
-        // -------------------------------
-        $summary = collect($priceMap)->map(function ($price, $typeName) use ($cards) {
-            $count = $cards->filter(fn($c) => strtoupper($c->cardType->name ?? '') === $typeName)->count();
+        /* ---------------------------------
+         * Summary (FIXED)
+         * --------------------------------- */
+        $summaryRaw = \App\Models\Card::selectRaw('card_type_id, COUNT(*) as total')
+            ->whereBetween('created_at', [$start_date, $end_date])
+            ->groupBy('card_type_id')
+            ->get()
+            ->keyBy('card_type_id');
+
+        $summary = collect($priceMap)->map(function ($price, $typeName) use ($summaryRaw, $cardTypes) {
+            $typeId = $cardTypes[$typeName] ?? null;
+            $count = $summaryRaw[$typeId]->total ?? 0;
+
             return [
-                'moneyAmount' => $count * $price,
                 'cardType' => $typeName,
                 'cardAmount' => $count,
+                'moneyAmount' => $count * $price,
             ];
         })->values();
 
-        // -------------------------------
-        // 🧩 Return all data
-        // -------------------------------
+        /* ---------------------------------
+         * Return
+         * --------------------------------- */
         return [
-            "cards_data" => $summary,
-            "ChartAreaInteractive" => [
-                "data" => $chartDataArea,
-                "config" => $chartConfigArea,
+            'cards_data' => $summary,
+            'ChartAreaInteractive' => [
+                'data' => $chartDataArea,
+                'config' => $chartConfigArea,
             ],
-            "ChartBarInteractive" => [
-                "summaryData" => $chartDataBar,
-                "config" => $chartConfigBar,
+            'ChartBarInteractive' => [
+                'summaryData' => $chartDataBar,
+                'config' => $chartConfigBar,
             ],
         ];
     }
+
+
 }
