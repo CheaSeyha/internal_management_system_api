@@ -435,10 +435,10 @@ class CardRepository
     public function cards_summary($start_date, $end_date)
     {
         $priceMap = [
-            'CAR CARD' => 50,
+            'STAFF' => 20,
             'VIP CARD' => 50,
             'DELIVERY' => 80,
-            'STAFF' => 20,
+            'CAR CARD' => 50,
             'ISP' => 20,
             'ROLLING' => 5,
             'CONSTRUCTION' => 20,
