@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\DB;
 
 use function PHPUnit\Framework\isEmpty;
 
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+
 class CardRepository
 {
 
@@ -582,5 +585,64 @@ class CardRepository
                 'config' => $chartConfigBar,
             ],
         ];
+    }
+
+    public function getDuplicateCards()
+    {
+        // Fetch all cards with necessary relationships for toResponse()
+        $cards = Card::with(['cardType', 'buildings.rooms', 'user', 'isp'])
+            ->get();
+
+        // Group by Name and Card Type first to reduce comparisons
+        $grouped = $cards->groupBy(function ($card) {
+            return $card->card_name . '|' . $card->card_type_id;
+        });
+
+        $duplicates = collect();
+
+        foreach ($grouped as $key => $group) {
+            if ($group->count() < 2) {
+                continue; // Unique name+type
+            }
+
+            // Within this group, check Block Signatures
+            $blockGroups = $group->groupBy(function ($card) {
+                // Generate signature: Sorted List of "BuildingID-RoomID"
+                $pairs = collect();
+                foreach ($card->buildings as $b) {
+                    $pairs->push($b->id . '-' . $b->pivot->room_id);
+                }
+
+                return $pairs->sort()->implode('|');
+            });
+
+            // Any blockGroup with > 1 item is a set of duplicates
+            foreach ($blockGroups as $signature => $dupCards) {
+                if ($dupCards->count() > 1) {
+                    foreach ($dupCards as $card) {
+                        $duplicates->push($card);
+                    }
+                }
+            }
+        }
+
+        // Pagination Manual Logic
+        $page = Paginator::resolveCurrentPage() ?: 1;
+        $perPage = 17;
+
+        $currentPageItems = $duplicates->slice(($page - 1) * $perPage, $perPage)->values();
+
+        // Transform items using Model's toResponse
+        $transformedItems = $currentPageItems->map(fn($card) => $card->toResponse());
+
+        $paginated = new LengthAwarePaginator(
+            $transformedItems,
+            $duplicates->count(),
+            $perPage,
+            $page,
+            ['path' => Paginator::resolveCurrentPath()]
+        );
+
+        return $paginated->toArray();
     }
 }

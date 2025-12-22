@@ -39,9 +39,9 @@ class CardService
             : $this->responseHelper->fail('Card not found', null, 404);
     }
 
-    public function getCardByIDAndCardType(int $type_card_id, string $card_type,)
+    public function getCardByIDAndCardType(int $type_card_id, string $card_type, )
     {
-        $card = $this->cardRepository->getCardByIDAndCardType($type_card_id, $card_type,);
+        $card = $this->cardRepository->getCardByIDAndCardType($type_card_id, $card_type, );
 
         return $card
             ? $this->responseHelper->success('Card retrieved successfully', $card, 200)
@@ -158,5 +158,17 @@ class CardService
         return $result
             ? $this->responseHelper->success('Card summary fetched successfully', $result, 200)
             : $this->responseHelper->fail('Failed to fetch card summary', null, 500);
+    }
+
+    public function getDuplicateCards()
+    {
+        $cards = $this->cardRepository->getDuplicateCards();
+
+        // Check if array is empty
+        if (empty($cards)) {
+            return $this->responseHelper->success('No duplicate cards found', [], 200);
+        }
+
+        return $this->responseHelper->success('Duplicate cards found', $cards, 200);
     }
 }

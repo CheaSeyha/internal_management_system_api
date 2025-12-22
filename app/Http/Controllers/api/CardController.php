@@ -227,4 +227,17 @@ class CardController extends Controller
             ], 500);
         }
     }
+
+    public function getDuplicateCards()
+    {
+        try {
+            $response = $this->card_service->getDuplicateCards();
+            return response()->json($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Failed to fetch duplicate cards.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
