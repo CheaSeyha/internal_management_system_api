@@ -67,25 +67,25 @@ class CardController extends Controller
 
     public function cardsFilter(Request $request)
     {
-
-        $validate = $request->validate([
+        $validated = $request->validate([
             'card_name' => 'string|nullable',
-            'filter' => 'string|nullable',
-            'filterValue' => 'string|nullable',
+            'filterBlocks' => 'array|nullable',
+            'filterBlocks.*' => 'string',
+            'filterCardTypes' => 'array|nullable',
+            'filterCardTypes.*' => 'string',
             'month' => 'integer|nullable',
             'year' => 'integer|nullable',
         ]);
 
-
         try {
             $response = $this->card_service->cardsFilter(
-                $request['card_name'],
-                $request['filter'],
-                $request['filterValue'],
-                $request['month'],
-                $request['year'],
-
+                $validated['card_name'] ?? null,
+                $validated['filterBlocks'] ?? [],
+                $validated['filterCardTypes'] ?? [],
+                $validated['month'] ?? null,
+                $validated['year'] ?? null,
             );
+
             return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
             return response()->json([
@@ -94,6 +94,8 @@ class CardController extends Controller
             ], 500);
         }
     }
+
+
 
     public function getAllCardType()
     {
@@ -207,13 +209,13 @@ class CardController extends Controller
     {
         $request->validate([
             'start_date' => 'required|string',
-            'end_date'   => 'required|string',
+            'end_date' => 'required|string',
         ]);
 
         try {
             // Parse dates to Y-m-d (DB format)
             $startDate = Carbon::createFromFormat('d-m-Y', $request->start_date)->format('Y-m-d');
-            $endDate   = Carbon::createFromFormat('d-m-Y', $request->end_date)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d-m-Y', $request->end_date)->format('Y-m-d');
 
             $res = $this->card_service->cards_summary($startDate, $endDate);
 

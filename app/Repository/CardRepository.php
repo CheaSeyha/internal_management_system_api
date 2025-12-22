@@ -136,63 +136,65 @@ class CardRepository
 
 
 
-    public function cardsFilter($searchByName = null, $filter = null, $filterValue = null, $month = null, $year = null)
-    {
+    public function cardsFilter(
+        $searchByName = null,
+        array $filterBlocks = [],
+        array $filterCardTypes = [],
+        $month = null,
+        $year = null
+    ) {
         $query = Card::with(['user', 'cardType', 'buildings.rooms'])->latest();
 
-        // 🔍 Search by name
+        // 🔍 Search by card name or number
         if ($searchByName) {
             $query->where(function ($q) use ($searchByName) {
-                $q->where('card_name', 'like', '%' . $searchByName . '%')
-                    ->orWhere('card_number', $searchByName); // exact match for number
+                $q->where('card_name', 'like', "%{$searchByName}%")
+                    ->orWhere('card_number', $searchByName);
             });
         }
 
-        // 🔍 Filter by card type
-        if ($filter === 'card_type' && $filterValue) {
-            $query->whereHas('cardType', function ($q) use ($filterValue) {
-                $q->where('name', $filterValue);
+        // 🔍 Filter by MULTIPLE card types
+        if (!empty($filterCardTypes)) {
+            $query->whereHas('cardType', function ($q) use ($filterCardTypes) {
+                $q->whereIn('name', $filterCardTypes);
             });
         }
 
-        // 🔍 Filter by block (building name)
-        if ($filter === 'block' && $filterValue) {
-            $query->whereHas('buildings', function ($q) use ($filterValue) {
-                $q->where('building_name', $filterValue);
+        // 🔍 Filter by MULTIPLE blocks
+        if (!empty($filterBlocks)) {
+            $query->whereHas('buildings', function ($q) use ($filterBlocks) {
+                $q->whereIn('building_name', $filterBlocks);
             });
         }
 
-
-        // 🔍 Automatically filter by current month and year
+        // 🔍 Month & year filter
         $query->whereMonth('created_at', $month ?? now()->month)
             ->whereYear('created_at', $year ?? now()->year);
 
-        // Paginate results
         $cards = $query->paginate(17);
 
         if ($cards->isEmpty()) {
-            return false; // Return false if no cards found
+            return false;
         }
 
-        // Keep filter & search in pagination URLs
+        // Keep filters in pagination
         $cards->appends([
             'searchByName' => $searchByName,
-            'filter' => $filter,
-            'filterValue' => $filterValue
+            'filterBlocks' => $filterBlocks,
+            'filterCardTypes' => $filterCardTypes,
         ]);
 
-        // Transform items in the paginator
-        $cards->getCollection()->transform(function ($card) {
-            return $card->toResponse();
-        });
+        // Transform response
+        $cards->getCollection()->transform(fn($card) => $card->toResponse());
 
-        // After transforming collection
         $cardsArray = $cards->toArray();
         $cardsArray['blocks'] = $this->blockRepository->getAllBuildings($month, $year);
         $cardsArray['cardTypes'] = $this->getAllCardType($month, $year);
 
         return $cardsArray;
     }
+
+
 
     //not use
     public function getCardById($id)
@@ -581,6 +583,4 @@ class CardRepository
             ],
         ];
     }
-
-
 }

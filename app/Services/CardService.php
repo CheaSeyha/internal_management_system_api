@@ -39,9 +39,9 @@ class CardService
             : $this->responseHelper->fail('Card not found', null, 404);
     }
 
-    public function getCardByIDAndCardType(int $type_card_id, string $card_type, )
+    public function getCardByIDAndCardType(int $type_card_id, string $card_type,)
     {
-        $card = $this->cardRepository->getCardByIDAndCardType($type_card_id, $card_type, );
+        $card = $this->cardRepository->getCardByIDAndCardType($type_card_id, $card_type,);
 
         return $card
             ? $this->responseHelper->success('Card retrieved successfully', $card, 200)
@@ -91,16 +91,27 @@ class CardService
             : $this->responseHelper->fail('Card not found', null, 404);
     }
 
-    public function cardsFilter($searchByName, $filter, $filterValue, $month = null, $year = null)
-    {
-
-        $result = $this->cardRepository->cardsFilter($searchByName, $filter, $filterValue, $month, $year);
-        // $result = $this->cardRepository->cardsFilter();
+    public function cardsFilter(
+        $searchByName,
+        array $filterBlocks = [],
+        array $filterCardTypes = [],
+        $month = null,
+        $year = null
+    ) {
+        $result = $this->cardRepository->cardsFilter(
+            $searchByName,
+            $filterBlocks,
+            $filterCardTypes,
+            $month,
+            $year
+        );
 
         return $result
             ? $this->responseHelper->success('Cards found', $result, 200)
             : $this->responseHelper->fail('Cards not found', null, 404);
     }
+
+
 
 
     public function getAllCardType()
