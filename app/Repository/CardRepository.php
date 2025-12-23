@@ -587,10 +587,11 @@ class CardRepository
         ];
     }
 
-    public function getDuplicateCards()
+    public function getDuplicateCards($month, $year)
     {
-        // Fetch all cards with necessary relationships for toResponse()
         $cards = Card::with(['cardType', 'buildings.rooms', 'user', 'isp'])
+            ->whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
             ->get();
 
         // Group by Name and Card Type first to reduce comparisons

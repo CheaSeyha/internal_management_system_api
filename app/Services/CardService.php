@@ -160,12 +160,12 @@ class CardService
             : $this->responseHelper->fail('Failed to fetch card summary', null, 500);
     }
 
-    public function getDuplicateCards()
+    public function getDuplicateCards($month, $year)
     {
-        $cards = $this->cardRepository->getDuplicateCards();
+        $cards = $this->cardRepository->getDuplicateCards($month, $year);
 
         // Check if array is empty
-        if (empty($cards)) {
+        if (empty($cards['data'])) { // Note: paginated result returns 'data' array
             return $this->responseHelper->success('No duplicate cards found', [], 200);
         }
 

@@ -228,10 +228,18 @@ class CardController extends Controller
         }
     }
 
-    public function getDuplicateCards()
+    public function getDuplicateCards(Request $request)
     {
+        $validated = $request->validate([
+            'month' => 'required|integer',
+            'year' => 'required|integer',
+        ]);
+
         try {
-            $response = $this->card_service->getDuplicateCards();
+            $response = $this->card_service->getDuplicateCards(
+                $validated['month'],
+                $validated['year']
+            );
             return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
             return response()->json([

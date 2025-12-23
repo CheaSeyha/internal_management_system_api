@@ -43,7 +43,7 @@ Route::middleware(['auth:api'])->group(function () {
         '/card/cards_filter',
         [CardController::class, 'cardsFilter']
     );
-    Route::get('/card/get_duplicate_cards', [CardController::class, 'getDuplicateCards']);
+    Route::post('/card/get_duplicate_cards', [CardController::class, 'getDuplicateCards']);
 
     Route::delete('/card/delete/{type_card_id}/{card_type}', [CardController::class, 'deleteCard']);
     Route::post('/card/edit/{type_card_id}/{card_type}', [CardController::class, 'editCard']);
