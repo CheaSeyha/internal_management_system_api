@@ -171,4 +171,13 @@ class CardService
 
         return $this->responseHelper->success('Duplicate cards found', $cards, 200);
     }
+
+    public function checkCardExist($validated)
+    {
+        $card = $this->cardRepository->checkCardExist($validated);
+
+        return $card
+            ? $this->responseHelper->success('Card already exists', $card, 200)
+            : $this->responseHelper->fail('Card not found', null, 404);
+    }
 }

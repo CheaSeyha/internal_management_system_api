@@ -30,9 +30,10 @@ Route::middleware(['auth:api'])->group(function () {
     // Add protected routes here, e.g.:
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
-
+    Route::post('', [AuthController::class, '']);
     //Cards Routes CRUD-------------------------
     Route::post('/cards_summary', [CardController::class, 'cards_summary']);
+    Route::get('/check_card_exist', [CardController::class, 'checkCardExist']);
     Route::post('/create_card', [CardController::class, 'create_card']);
     Route::get('/cards', [CardController::class, 'getAllCards']);
     Route::get('/cards/get_all_card_type', [CardController::class, 'getAllCardType']);

@@ -248,4 +248,20 @@ class CardController extends Controller
             ], 500);
         }
     }
+
+    public function checkCardExist(CardRequest $request)
+    {
+        $card_validated = $request->validated();
+
+
+        try {
+            $response = $this->card_service->checkCardExist($card_validated);
+            return response()->json($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Failed to fetch duplicate cards.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

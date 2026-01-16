@@ -587,6 +587,68 @@ class CardRepository
         ];
     }
 
+    public function checkCardExist(array $data)
+    {
+        $cardName = $data['card_name'];
+        $cardType = $data['card_type'];
+        $blocks = $data['block'] ?? [];
+
+        // Find matches by name and type first
+        $candidates = Card::with(['buildings.rooms', 'user', 'cardType'])
+            ->where('card_name', $cardName)
+            ->whereHas('cardType', function ($q) use ($cardType) {
+                $q->where('name', $cardType);
+            })
+            ->get();
+
+        if ($candidates->isEmpty()) {
+            return false;
+        }
+
+        // Generate signature for input blocks
+        $inputPairs = collect();
+
+        // Normalize blocks input (handle JSON string or array)
+        $blocksData = is_string($blocks) ? json_decode($blocks, true) : $blocks;
+
+        foreach ($blocksData as $block) {
+            $buildingName = $block['building'] ?? null;
+            $roomNames = $block['rooms'] ?? [];
+
+            $building = Building::where('building_name', $buildingName)->first();
+            if (!$building)
+                continue;
+
+            if (empty($roomNames)) {
+                $inputPairs->push($building->id . '-');
+            } else {
+                $roomIds = Room::where('building_id', $building->id)
+                    ->whereIn('room_name', $roomNames)
+                    ->pluck('id');
+
+                foreach ($roomIds as $roomId) {
+                    $inputPairs->push($building->id . '-' . $roomId);
+                }
+            }
+        }
+        $inputSignature = $inputPairs->sort()->values()->implode('|');
+
+        // Compare with candidates
+        foreach ($candidates as $card) {
+            $cardPairs = collect();
+            foreach ($card->buildings as $b) {
+                $cardPairs->push($b->id . '-' . ($b->pivot->room_id ?? ''));
+            }
+            $cardSignature = $cardPairs->sort()->values()->implode('|');
+
+            if ($inputSignature === $cardSignature) {
+                return $card->toResponse();
+            }
+        }
+
+        return false;
+    }
+
     public function getDuplicateCards($month, $year)
     {
         $cards = Card::with(['cardType', 'buildings.rooms', 'user', 'isp'])
@@ -646,4 +708,6 @@ class CardRepository
 
         return $paginated->toArray();
     }
+
+
 }
