@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use App\Helper\ResponseHelper;
-use App\Models\Dayoff;
 use App\Models\Department;
 use App\Models\Position;
 use App\Models\Role;
 use App\Models\Staff;
+use App\Models\User;
 use App\Repository\StaffRepository;
 
 class StaffService
@@ -16,7 +16,9 @@ class StaffService
      * Create a new class instance.
      */
     protected $responseHelper;
+
     protected $staffRepository;
+
     public function __construct(ResponseHelper $responseHelper, StaffRepository $staffRepository)
     {
         //
@@ -34,7 +36,7 @@ class StaffService
         if (isset($staff_data['position_name'])) {
             $getId = Position::where('position_name', $staff_data['position_name'])->first();
 
-            if (!$getId) {
+            if (! $getId) {
                 return $this->responseHelper->fail('Position Not Found', null, 404);
             }
 
@@ -44,7 +46,7 @@ class StaffService
         if (isset($staff_data['department_name'])) {
             $getDepartmentId = Department::where('department_name', $staff_data['department_name'])->first();
 
-            if (!$getDepartmentId) {
+            if (! $getDepartmentId) {
                 return $this->responseHelper->fail('Department Not Found', null, 404);
             }
 
@@ -54,7 +56,7 @@ class StaffService
         if (isset($staff_data['role_name'])) {
             $getRoleId = Role::where('role_name', $staff_data['role_name'])->first();
 
-            if (!$getRoleId) {
+            if (! $getRoleId) {
                 return $this->responseHelper->fail('Role name Not Found', null, 404);
             }
 
@@ -70,16 +72,17 @@ class StaffService
 
     public function getAllStaff()
     {
-        $staff_data = Staff::all()->map(function ($staff) {
-            $staff->profile_picture_url = $staff->profile_picture
-                ? url('/staff/image_profile/' . $staff->id)   // secure image endpoint
-                : null;
+        // 2) All users + (optional) linked staff
+        $user_data = User::with([
+            'role',
+            'staff.position',
+            'staff.department',
+        ])->paginate(17);
 
-            return $staff;
-        });
-
-        return $staff_data
-            ? $this->responseHelper->success('Get All Staff', $staff_data, 200)
-            : $this->responseHelper->fail('Failed to get staff data', null, 500);
+        return $this->responseHelper->success(
+            'Get All Staff and Users',
+            $user_data,
+            200
+        );
     }
 }
