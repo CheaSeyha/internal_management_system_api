@@ -77,7 +77,7 @@ class StaffService
             'role',
             'staff.position',
             'staff.department',
-        ])->paginate(17);
+        ])->paginate(12);
 
         return $this->responseHelper->success(
             'Get All Staff and Users',
