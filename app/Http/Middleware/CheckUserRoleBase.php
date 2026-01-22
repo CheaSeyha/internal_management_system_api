@@ -15,7 +15,7 @@ class CheckUserRoleBase
         // The only 2 roles we allow
         $allowed = [1, 2]; // super admin + admin
         if (!in_array($user->role_id, $allowed)) {
-            return ResponseHelper::fail("Can not add new staff", "You Don't Have permission to add new staff", 403);
+            return ResponseHelper::fail("Forbidden. You do not have permission to access this resource.", 403);
         }
 
         return $next($request);

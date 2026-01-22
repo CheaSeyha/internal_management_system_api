@@ -72,17 +72,18 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     //Staff Routes
-    Route::prefix('staff')->group(function () {
+    Route::prefix('staff')
+        ->middleware('CheckUserRoleBase')
+        ->group(function () {
 
-        // Only this one route checks the role
-        Route::post('/add_new_staff', [StaffController::class, 'addNewStaff'])
-            ->middleware('CheckUserRoleBase');
+            // Only this one route checks the role
+            Route::post('/add_new_staff', [StaffController::class, 'addNewStaff']);
 
-        // This route does NOT use middleware
-        Route::get('/get_all_staff', [StaffController::class, 'getAllStaff']);
-        Route::get('/image_profile/{staff_id}', [StaffController::class, 'getProfileImage']);
-        // Route::get('/get_', [StaffController::class, 'getAllStaff']);
-    });
+            // This route does NOT use middleware
+            Route::get('/get_all_staff', [StaffController::class, 'getAllStaff']);
+            Route::get('/image_profile/{staff_id}', [StaffController::class, 'getProfileImage']);
+            // Route::get('/get_', [StaffController::class, 'getAllStaff']);
+        });
 
     //Staff Routes
     Route::get('/cards/{id}/image', [CardController::class, 'getImage'])
