@@ -27,8 +27,11 @@ class StaffRepository
 
 
         $staff = Staff::create([
+            'staff_id'      => $staff_data['staff_id'],
             'first_name'      => $staff_data['first_name'],
             'last_name'       => $staff_data['last_name'],
+            'label_id'        => $staff_data['label_id'],
+            'genders'         => $staff_data['genders'],
             'email'           => $staff_data['email'],
             'phone_number'    => $staff_data['phone_number'] ?? null,
             'position_id'     => $position_id,
@@ -36,7 +39,6 @@ class StaffRepository
             'status'          => $staff_data['status'],
             'date_of_joining' => today(),
             'date_of_birth'   => $staff_data['date_of_birth'],
-
         ]);
 
 

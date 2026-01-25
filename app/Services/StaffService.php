@@ -33,6 +33,17 @@ class StaffService
         $department_id = null;
         $role_id = null;
 
+        $staff = Staff::where('staff_id', $staff_data['staff_id'])->first();
+
+        if ($staff) {
+            return $this->responseHelper->fail('Staff ID :' . $staff_data['staff_id'] . ' already exists', null, 409);
+        }
+
+
+        if ($staff) {
+            return $this->responseHelper->fail('Staff ID already exists', null, 404);
+        }
+
         if (isset($staff_data['position_name'])) {
             $getId = Position::where('position_name', $staff_data['position_name'])->first();
 

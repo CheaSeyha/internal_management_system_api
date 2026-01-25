@@ -73,7 +73,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     //Staff Routes
     Route::prefix('staff')
-        ->middleware('CheckUserRoleBase')
+        ->middleware('CheckUserRoleBase') //only admin and super admin can use these routes
         ->group(function () {
 
             // Only this one route checks the role

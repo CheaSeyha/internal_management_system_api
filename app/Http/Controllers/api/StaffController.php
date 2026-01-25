@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Helper\ResponseHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AddStaffRequest;
 use App\Models\Staff;
 use App\Services\StaffService;
 use Illuminate\Http\Request;
@@ -20,25 +21,11 @@ class StaffController extends Controller
         $this->staffService = $staff_service;
     }
 
-    public function addNewStaff(Request $request)
+    public function addNewStaff(AddStaffRequest $request)
     {
 
-        $validate = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            "phone_number" => "required | string",
-            "role_name" => "required | string",
-            "position_name" => "required | string",
-            "department_name" => "required | string",
-            "status" => "nullable | string",
-            "date_of_birth" => "required | date",
-            'email' => 'required|email|max:255|unique:staff,email',
-            'password' => 'required|string|min:8',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // for createa user profile
-        ]);
-
         try {
-            $response = $this->staffService->add_staff($validate);
+            $response = $this->staffService->add_staff($request->validated());
 
             return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
