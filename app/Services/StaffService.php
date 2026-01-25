@@ -84,15 +84,15 @@ class StaffService
     public function getAllStaff()
     {
         // 2) All users + (optional) linked staff
-        $user_data = User::with([
-            'role',
-            'staff.position',
-            'staff.department',
+        $staff_data = Staff::with([
+            'department',
+            'position',
+            'user',
         ])->paginate(12);
 
         return $this->responseHelper->success(
             'Get All Staff and Users',
-            $user_data,
+            $staff_data,
             200
         );
     }

@@ -36,7 +36,7 @@ class AddStaffRequest extends FormRequest
             'phone_number' => 'required|string',
             'genders' => 'required|string',
             'label_id' => 'required|string',
-
+            'isCreatedUser' => 'required|boolean',
             'department_name' => [
                 'required',
                 Rule::exists('departments', 'department_name'),
@@ -56,7 +56,6 @@ class AddStaffRequest extends FormRequest
             'date_of_birth' => 'required|date',
 
             'email' => 'required|email|max:255|unique:staff,email',
-            'password' => 'required|string|min:8',
 
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ];

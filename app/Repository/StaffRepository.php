@@ -22,7 +22,7 @@ class StaffRepository
     public function add_staff($staff_data, $department_id, $position_id, $role_id)
     {
         // 1️⃣ Create staff record
-
+        $createdUser = null;
 
 
 
@@ -67,25 +67,29 @@ class StaffRepository
 
         $staff->save();
 
-        // 2️⃣ Create linked User account
-        $createdUser = $this->authRepo->createUser([
-            'name'          => $staff_data['first_name'] . ' ' . $staff_data['last_name'],
-            'staff_id'      => $staff->id,
-            'email'         => $staff_data['email'],
-            'role_id'       => $role_id,
-            'password'      => $staff_data['password'],
-            'profile_image' => $staff_data['profile_image'] ?? null,
-        ]);
+        // 2️⃣ Create linked User account if isCreatedUser is true
+        $isCreatedUser = !empty($staff_data['isCreatedUser']); // true only when present and truthy
 
-        // 3️⃣ Load Department and Position relationships
-        $staff->load([
-            'department:id,department_name', // only select id and name
-            'position:id,position_name'
-        ]);
+        if ($isCreatedUser) {
+            $createdUser = $this->authRepo->createUser([
+                'name'          => $staff_data['first_name'] . ' ' . $staff_data['last_name'],
+                'staff_id'      => $staff->id,
+                'email'         => $staff_data['email'],
+                'role_id'       => $role_id,
+                'password'      => $staff_data['password'] ?? null,
+                'profile_image' => $staff_data['profile_image'] ?? null,
+            ]);
 
-        $createdUser->load([
-            'role:id,role_name'
-        ]);
+            $staff->load([
+                'department:id,department_name',
+                'position:id,position_name'
+            ]);
+
+            $createdUser->load([
+                'role:id,role_name'
+            ]);
+        }
+
 
         // 4️⃣ Prepare return data
         $data = [
