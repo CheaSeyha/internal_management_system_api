@@ -3,7 +3,9 @@
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\BlockController;
 use App\Http\Controllers\api\CardController;
+use App\Http\Controllers\api\DepartmentController;
 use App\Http\Controllers\api\ISPController;
+use App\Http\Controllers\api\PositionController;
 use App\Http\Controllers\api\StaffController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -71,6 +73,23 @@ Route::middleware(['auth:api'])->group(function () {
         Route::delete('/delete_isp/{isp_id}', [ISPController::class, 'deleteISP']);
     });
 
+
+    //Position Routes 
+    Route::prefix('position')->middleware('CheckUserRoleBase')->group(function () {
+        Route::get('/all_positions', [PositionController::class, 'getAllPositions']);
+        Route::post('/add_position', [PositionController::class, 'addPosition']);
+        Route::put('/update_position/{position_id}', [PositionController::class, 'updatePosition']);
+        Route::delete('/delete_position/{position_id}', [PositionController::class, 'deletePosition']);
+    });
+
+    //Department Routes
+    Route::prefix('department')->middleware('CheckUserRoleBase')->group(function () {
+        Route::get('/all_departments', [DepartmentController::class, 'getAllDepartments']);
+        Route::post('/add_department', [DepartmentController::class, 'addDepartment']);
+        Route::put('/update_department/{department_id}', [DepartmentController::class, 'updateDepartment']);
+        Route::delete('/delete_department/{department_id}', [DepartmentController::class, 'deleteDepartment']);
+    });
+
     //Staff Routes
     Route::prefix('staff')
         ->middleware('CheckUserRoleBase') //only admin and super admin can use these routes
@@ -82,7 +101,6 @@ Route::middleware(['auth:api'])->group(function () {
             // This route does NOT use middleware
             Route::get('/get_all_staff', [StaffController::class, 'getAllStaff']);
             Route::get('/image_profile/{staff_id}', [StaffController::class, 'getProfileImage']);
-            // Route::get('/get_', [StaffController::class, 'getAllStaff']);
         });
 
     //Staff Routes
