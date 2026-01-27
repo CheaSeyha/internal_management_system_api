@@ -31,10 +31,9 @@ class AuthRepository
 
             // Sanitize name/email for file usage
             $namePart = Str::slug($data['name']); // convert spaces/special chars to hyphens
-            $emailPart = Str::before($data['email'], '@'); // take email before @
 
             $extension = $file->getClientOriginalExtension(); // e.g., jpg, png
-            $filename = "{$emailPart}_{$namePart}.{$extension}";
+            $filename = "{$namePart}.{$extension}";
 
             // Store in public/profile_images with custom name
             $profileImagePath = $file->storeAs('profile_images', $filename, 'public');

@@ -36,8 +36,8 @@ class StaffRepository
             'phone_number'    => $staff_data['phone_number'] ?? null,
             'position_id'     => $position_id,
             'department_id'   => $department_id,
-            'status'          => $staff_data['status'],
-            'date_of_joining' => today(),
+            'status'          => "active",
+            'date_of_joining' => $staff_data['date_of_joining'],
             'date_of_birth'   => $staff_data['date_of_birth'],
         ]);
 
@@ -76,8 +76,8 @@ class StaffRepository
                 'staff_id'      => $staff->id,
                 'email'         => $staff_data['email'],
                 'role_id'       => $role_id,
-                'password'      => $staff_data['password'] ?? null,
-                'profile_image' => $staff_data['profile_image'] ?? null,
+                'password'      => $staff_data['password'],
+                'profile_image' => $staff_data['profile_picture'],
             ]);
 
             $staff->load([

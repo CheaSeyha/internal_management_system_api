@@ -30,13 +30,25 @@ class AddStaffRequest extends FormRequest
                 'numeric',
                 Rule::unique('staff', 'staff_id'),
             ],
-
+            'label_id' => 'required|string',
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
             'phone_number' => 'required|string',
             'genders' => 'required|string',
-            'label_id' => 'required|string',
+
+
+
             'isCreatedUser' => 'required|boolean',
+            'password' => [ // only required if isCreatedUser is true
+                Rule::requiredIf(fn() => $this->boolean('isCreatedUser')),
+                'string',
+                'min:8',
+                'max:255',
+            ],
+            'role_name' => [ // only required if isCreatedUser is true
+                Rule::requiredIf(fn() => $this->boolean('isCreatedUser')),
+                Rule::exists('roles', 'role_name'),
+            ],
             'department_name' => [
                 'required',
                 Rule::exists('departments', 'department_name'),
@@ -46,18 +58,10 @@ class AddStaffRequest extends FormRequest
                 'required',
                 Rule::exists('positions', 'position_name'),
             ],
-
-            'role_name' => [
-                'required',
-                Rule::exists('roles', 'role_name'),
-            ],
-
-            'status' => 'required|string',
             'date_of_birth' => 'required|date',
-
+            'date_of_joining' => 'required|date',
             'email' => 'required|email|max:255|unique:staff,email',
-
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,webp',
         ];
     }
 
