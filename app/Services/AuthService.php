@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 use function Pest\Laravel\json;
 
-class AuthSevice
+class AuthService
 {
     protected $authRepository;
     protected $responseHelper;

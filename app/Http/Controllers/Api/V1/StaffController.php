@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Helper\ResponseHelper;
 use App\Http\Controllers\Controller;
@@ -27,12 +27,9 @@ class StaffController extends Controller
         try {
             $response = $this->staffService->add_staff($request->validated());
 
-            return response()->json($response->getData(), $response->getStatusCode());
+            return $this->response_helper->success($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'Can not add new staff',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->response_helper->fail('Can not add new staff', 500);
         }
     }
 
@@ -41,12 +38,9 @@ class StaffController extends Controller
         try {
             $response = $this->staffService->getAllStaff();
 
-            return response()->json($response->getData(), $response->getStatusCode());
+            return $this->response_helper->success($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'Can not add new staff',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->response_helper->fail('Can not get all staff', 500);
         }
     }
 
@@ -56,15 +50,15 @@ class StaffController extends Controller
         $staff = Staff::findOrFail($id);
 
         if (!$staff->profile_picture) {
-            return response()->json(['message' => 'No profile picture'], 404);
+            return $this->response_helper->fail('No profile picture', 404);
         }
 
         $path = $staff->profile_picture;
 
         if (!Storage::disk('private')->exists($path)) {
-            return response()->json(['message' => 'File missing'], 404);
+            return $this->response_helper->fail('File missing', 404);
         }
 
-        return Storage::disk('private')->response($path);
+        return response()->download(storage_path('app/private/' . $path));
     }
 }
