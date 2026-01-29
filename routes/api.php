@@ -7,12 +7,8 @@ use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\ISPController;
 use App\Http\Controllers\Api\V1\PositionController;
 use App\Http\Controllers\Api\V1\StaffController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
 Route::prefix('v1')->group(function () {
     Route::controller(AuthController::class)->group(function () {
         // Public routes
@@ -94,11 +90,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('staff')
             ->middleware('CheckUserRoleBase') //only admin and super admin can use these routes
             ->group(function () {
-
-                // Only this one route checks the role
                 Route::post('/add_new_staff', [StaffController::class, 'addNewStaff']);
-
-                // This route does NOT use middleware
                 Route::get('/get_all_staff', [StaffController::class, 'getAllStaff']);
                 Route::get('/image_profile/{staff_id}', [StaffController::class, 'getProfileImage']);
             });
