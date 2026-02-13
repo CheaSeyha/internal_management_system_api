@@ -1,61 +1,333 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Internal Management System API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 12 REST API for Internal Management System
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📌 Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+This project is a **Laravel 12 REST API** built for an Internal Management System.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Main features include:
 
-## Learning Laravel
+* ✅ JWT Authentication
+* ✅ Card Management
+* ✅ Building & Room Management
+* ✅ Department & Position Management
+* ⚠️ Staff Management (Partially Completed)
+* ❌ Roster Management (Not Completed Yet)
+* ⚠️ ISP Management (Basic CRUD Only)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Some modules are still under development and will be extended in future versions.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠 Tech Stack
 
-## Laravel Sponsors
+* Laravel 12
+* PHP 8.2+
+* JWT Authentication (tymon/jwt-auth)
+* SQLite (default) / MySQL supported
+* RESTful API architecture
+* Service + Repository pattern
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## ⚙️ Installation (Local Setup)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 1️⃣ Clone Project
 
-## Contributing
+```bash
+git clone <your-repository-url>
+cd internal_management_system_api
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 2️⃣ Install Dependencies
 
-## Code of Conduct
+```bash
+composer install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 3️⃣ Create Environment File
 
-## Security Vulnerabilities
+```bash
+cp .env.example .env
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 4️⃣ Generate App Key
 
-## License
+```bash
+php artisan key:generate
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 5️⃣ Configure Database (SQLite Example)
+
+Create database file:
+
+```bash
+touch database/database.sqlite
+```
+
+Update `.env`:
+
+```env
+DB_CONNECTION=sqlite
+DB_DATABASE=/absolute/path/to/database/database.sqlite
+```
+
+### 6️⃣ Generate JWT Secret
+
+```bash
+php artisan jwt:secret
+```
+
+### 7️⃣ Run Migrations
+
+```bash
+php artisan migrate
+```
+
+### 8️⃣ Run Server
+
+```bash
+php artisan serve
+```
+
+API Base URL:
+
+```
+http://127.0.0.1:8000/api/v1
+```
+
+---
+
+## 🐳 Docker Setup (Optional)
+
+Build:
+
+```bash
+docker build -t internal-management-api .
+```
+
+Run:
+
+```bash
+docker run -p 8080:80 internal-management-api
+```
+
+API Base URL (Docker):
+
+```
+http://127.0.0.1:8080/api/v1
+```
+
+---
+
+# 🔐 Authentication (JWT)
+
+This project uses JWT for authentication.
+
+After login, include token in header:
+
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+---
+
+## 🧾 Auth Routes
+
+Public:
+
+* POST `/api/v1/register`
+* POST `/api/v1/login`
+* POST `/api/v1/refresh-token`
+
+Protected:
+
+* GET `/api/v1/user`
+* POST `/api/v1/logout`
+
+---
+
+# 📦 Modules
+
+---
+
+## 🟢 Card Module (Mostly Completed)
+
+Features:
+
+* Create card
+* List cards
+* Search cards
+* Filter cards
+* Delete card
+* Edit card
+* Card summary by date
+* Card type management
+* Get duplicate cards
+* View card image
+
+Main Routes:
+
+* GET `/cards`
+* POST `/create_card`
+* POST `/card/search`
+* DELETE `/card/delete/{id}/{type}`
+
+---
+
+## 🟢 Block Module (Buildings & Rooms)
+
+Features:
+
+* Add building
+* Update building
+* Delete building
+* Add room
+* Delete room
+* List all buildings and rooms
+
+Routes:
+
+* GET `/blocks/all_buildings`
+* POST `/blocks/add_building`
+* GET `/blocks/all_rooms`
+
+---
+
+## 🟢 Department Module
+
+Admin / Super Admin only.
+
+Routes:
+
+* GET `/department/all_departments`
+* POST `/department/add_department`
+* PUT `/department/update_department/{id}`
+* DELETE `/department/delete_department/{id}`
+
+---
+
+## 🟢 Position Module
+
+Admin / Super Admin only.
+
+Routes:
+
+* GET `/position/all_positions`
+* POST `/position/add_position`
+* PUT `/position/update_position/{id}`
+* DELETE `/position/delete_position/{id}`
+
+---
+
+## 🟡 ISP Module (Basic CRUD Only)
+
+Current Features:
+
+* Add ISP
+* Update ISP
+* Delete ISP
+* List all ISP
+
+Routes:
+
+* GET `/isp/all_isps`
+* POST `/isp/add_isp`
+* PUT `/isp/update_isp/{id}`
+* DELETE `/isp/delete_isp/{id}`
+
+Planned Improvements:
+
+* ISP Packages
+* Billing system
+* Usage tracking
+* Building-to-ISP mapping
+
+---
+
+## 🟡 Staff Module (Partially Completed)
+
+Current Features:
+
+* Add new staff
+* Get all staff
+* Get staff profile image
+
+Routes:
+
+* POST `/staff/add_new_staff`
+* GET `/staff/get_all_staff`
+* GET `/staff/image_profile/{staff_id}`
+
+Planned Improvements:
+
+* Update staff
+* Delete staff
+* Search/filter staff
+* Staff status management
+* File validation improvements
+
+---
+
+## 🔴 Roster Module (Not Completed Yet)
+
+Database structure exists, but API endpoints are not implemented.
+
+Planned Features:
+
+* Create monthly roster
+* Update shift schedule
+* Filter roster by date
+* Leave/day-off integration
+
+---
+
+# 👥 Role-Based Access Control
+
+Some endpoints are restricted by role:
+
+* role_id = 1 → Super Admin
+* role_id = 2 → Admin
+
+Unauthorized access will return 403 Forbidden.
+
+---
+
+# 📊 API Response Format
+
+Standard success response:
+
+```json
+{
+  "success": true,
+  "message": "Request successful",
+  "data": {}
+}
+```
+
+Error response:
+
+```json
+{
+  "success": false,
+  "message": "Something went wrong",
+  "error": "Error details"
+}
+```
+
+---
+
+# 🚀 Future Improvements
+
+* Finish Roster Module
+* Complete Staff Module
+* Extend ISP Module
+* Add API documentation (Swagger)
+* Add automated tests
+* Add deployment guide
+* Add CI/CD pipeline
+
+---
