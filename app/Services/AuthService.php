@@ -6,6 +6,8 @@ use App\Helper\ResponseHelper;
 use App\Repository\AuthRepository;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Laravel\Passport\Passport;
 
 use function Pest\Laravel\json;
 
@@ -30,23 +32,29 @@ class AuthService
      * @param \Illuminate\Http\Request $loginRequest
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login($loginRequest)
+    public function login($req)
     {
-        $credentials = $loginRequest->only('email', 'password');
+        // Make sure you get only email & password
+        $credentials = $req->only('email', 'password');
 
-        // Check if user email exists
-        $user = $this->authRepository->checkEmailExists($credentials['email']);
-        if (!$user) {
-            return $this->responseHelper->fail('Unauthorized User not found', null, 404);
+        // Request token from Passport password grant
+        $response = Http::asForm()->post('http://127.0.0.1:8001/oauth/token', [
+            'grant_type' => 'password',
+            'client_id' => env('CLIENT_ID'),
+            'client_secret' => env('CLIENT_SECRET'),
+            'username' => $credentials['email'],
+            'password' => $credentials['password'],
+            'scope' => '',
+        ]);
+
+        if ($response->failed()) {
+            return $this->responseHelper->fail('Invalid credentials', null, 401);
         }
 
-        // Check if password is correct
-        if (!$accessToken = Auth::attempt($credentials)) {
-            return $this->responseHelper->fail('Unauthorized Email or Password', null, 401);
-        }
-        $userData = Auth::user();
-        // If the user is found and the password is correct, return the access token and user data
-        return $this->respondWithToken($accessToken, $userData);
+        // Decode the response JSON
+        $data = $response->json();
+
+        return $this->responseHelper->success('Login successful', $data, 200);
     }
 
     /**
@@ -88,14 +96,25 @@ class AuthService
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refreshToken()
+    public function refreshToken($refreshToken)
     {
-        $newToken = Auth::refresh();
+        $response = Http::asForm()->post('http://127.0.0.1:8001/oauth/token', [
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $refreshToken,
+            'client_id' => env('CLIENT_ID'),
+            'client_secret' => env('CLIENT_SECRET'), // Required for confidential clients only...
+            'scope' => '',
+        ]);
 
-        // Authenticate with new token to get user
-        $user = Auth::setToken($newToken)->user();
 
-        return $this->respondWithToken($newToken, $user, 'Token refreshed successfully');
+        if ($response->failed()) {
+            return $this->responseHelper->fail('Invalid credentials', null, 401);
+        }
+
+        // Decode the response JSON
+        $data = $response->json();
+
+        return $this->responseHelper->success('User retrieved successfully', $data, 200);
     }
 
     /**
@@ -105,17 +124,21 @@ class AuthService
      */
     public function logout()
     {
-        Auth::logout();
+        $token = Auth::user()->token();
+
+        $token->revoke();
+        $token->refreshToken?->revoke();
+
         return $this->responseHelper->success('User logged out successfully', null, 200);
     }
 
     protected function respondWithToken($token, $user, $message = 'Login successful')
     {
-        return $this->responseHelper->success($message, [
-            'user' => $user,
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60,
-        ], 200);
+        // return $this->responseHelper->success($message, [
+        //     'user' => $user,
+        //     'access_token' => $token,
+        //     'token_type' => 'bearer',
+        //     'expires_in' => auth()->factory()->getTTL() * 60,
+        // ], 200);
     }
 }

@@ -84,10 +84,15 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refreshToken()
+    public function refreshToken(Request $request)
     {
+
+        $valdiate = $request->validate([
+            'refresh_token' => 'required',
+        ]);
+
         try {
-            $getRefreshToken = $this->authService->refreshToken();
+            $getRefreshToken = $this->authService->refreshToken($valdiate['refresh_token']);
             return response()->json($getRefreshToken->getData());
         } catch (\Throwable $th) {
             return response()->json([
