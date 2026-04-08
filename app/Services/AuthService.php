@@ -30,9 +30,9 @@ class AuthService
      */
     public function login($req)
     {
-        $credentials = $req->only('email', 'password');
+        $credentials = $req->only('email', 'password', 'remember_me');
 
-        $response = Http::asForm()->post('http://127.0.0.1:8001/oauth/token', [
+        $response = Http::asForm()->post(env('APP_DEV_URL') . '/oauth/token', [
             'grant_type' => 'password',
             'client_id' => env('CLIENT_ID'),
             'client_secret' => env('CLIENT_SECRET'),
@@ -51,16 +51,17 @@ class AuthService
             "expires_in" => $response->json('expires_in'),
         ];
 
+        $rememberMe = $credentials['remember_me'] ? 60 * 24 * 30 : 0;
         $cookie = cookie(
             'refresh_token',
             $response->json('refresh_token'),
-            60 * 24 * 30, // 30 days
-            null,
+            $rememberMe, // 30 days
+            '/',
             null,
             false,   // secure (HTTPS)
             true,   // httpOnly
             false,
-            'None'
+            'lax'
         );
 
         return ResponseHelper::success(
@@ -112,7 +113,7 @@ class AuthService
      */
     public function refreshToken($refreshToken)
     {
-        $response = Http::asForm()->post('http://127.0.0.1:8001/oauth/token', [
+        $response = Http::asForm()->post(env('APP_DEV_URL') . '/oauth/token', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $refreshToken,
             'client_id' => env('CLIENT_ID'),
@@ -139,12 +140,12 @@ class AuthService
             'refresh_token',
             $response->json('refresh_token'),
             60 * 24 * 30, // 30 days
-            null,
+            '/',
             null,
             false,   // secure (HTTPS)
             true,   // httpOnly
             false,
-            'None'
+            'lax'
         );
 
         return ResponseHelper::success(
