@@ -10,13 +10,13 @@ This project is a **Laravel 12 REST API** built for an Internal Management Syste
 
 Main features include:
 
-* ✅ JWT Authentication
-* ✅ Card Management
-* ✅ Building & Room Management
-* ✅ Department & Position Management
-* ⚠️ Staff Management (Partially Completed)
-* ❌ Roster Management (Not Completed Yet)
-* ⚠️ ISP Management (Basic CRUD Only)
+- ✅ JWT Authentication
+- ✅ Card Management
+- ✅ Building & Room Management
+- ✅ Department & Position Management
+- ⚠️ Staff Management (Partially Completed)
+- ❌ Roster Management (Not Completed Yet)
+- ⚠️ ISP Management (Basic CRUD Only)
 
 Some modules are still under development and will be extended in future versions.
 
@@ -24,12 +24,12 @@ Some modules are still under development and will be extended in future versions
 
 ## 🛠 Tech Stack
 
-* Laravel 12
-* PHP 8.2+
-* JWT Authentication (tymon/jwt-auth)
-* SQLite (default) / MySQL supported
-* RESTful API architecture
-* Service + Repository pattern
+- Laravel 12
+- PHP 8.2+
+- JWT Authentication (tymon/jwt-auth)
+- SQLite (default) / MySQL supported
+- RESTful API architecture
+- Service + Repository pattern
 
 ---
 
@@ -75,31 +75,67 @@ DB_CONNECTION=sqlite
 DB_DATABASE=/absolute/path/to/database/database.sqlite
 ```
 
-### 6️⃣ Generate JWT Secret
-
-```bash
-php artisan jwt:secret
-```
-
-### 7️⃣ Run Migrations
+### 6️⃣ Run Migrations
 
 ```bash
 php artisan migrate
 ```
 
-### 8️⃣ Run Server
+### 7️⃣ Install Laravel Passport (IMPORTANT)
 
 ```bash
-php artisan serve
+php artisan passport:install
 ```
 
-API Base URL:
+### 8️⃣ Create Password Grant Client (if needed)
+
+```bash
+php artisan passport:client --password
+```
+
+Update your `.env`:
+
+```env
+CLIENT_ID=your_client_id
+CLIENT_SECRET=your_client_secret
+```
+
+### 9️⃣ Run Server (Development Mode ⚠️)
+
+```bash
+php artisan serve --port=8000
+php artisan serve --port=8001
+```
+
+### 🌐 API Base URL
 
 ```
 http://127.0.0.1:8000/api/v1
 ```
 
----
+### 🔐 OAuth Token Endpoint
+
+```
+http://127.0.0.1:8001/oauth/token
+```
+
+## ⚠️ Important Notes
+
+- After cloning project on a new machine, always run:
+
+```bash
+php artisan passport:install
+```
+
+- If you get `500 error` or `Invalid credentials`:
+    - Check Passport keys
+    - Check CLIENT_ID / CLIENT_SECRET
+    - Ensure user password is hashed
+
+## ✅ Production Note
+
+- No need for 2 ports in production
+- OAuth works on same domain
 
 ## 🐳 Docker Setup (Optional)
 
@@ -139,14 +175,14 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 
 Public:
 
-* POST `/api/v1/register`
-* POST `/api/v1/login`
-* POST `/api/v1/refresh-token`
+- POST `/api/v1/register`
+- POST `/api/v1/login`
+- POST `/api/v1/refresh-token`
 
 Protected:
 
-* GET `/api/v1/user`
-* POST `/api/v1/logout`
+- GET `/api/v1/user`
+- POST `/api/v1/logout`
 
 ---
 
@@ -158,23 +194,23 @@ Protected:
 
 Features:
 
-* Create card
-* List cards
-* Search cards
-* Filter cards
-* Delete card
-* Edit card
-* Card summary by date
-* Card type management
-* Get duplicate cards
-* View card image
+- Create card
+- List cards
+- Search cards
+- Filter cards
+- Delete card
+- Edit card
+- Card summary by date
+- Card type management
+- Get duplicate cards
+- View card image
 
 Main Routes:
 
-* GET `/cards`
-* POST `/create_card`
-* POST `/card/search`
-* DELETE `/card/delete/{id}/{type}`
+- GET `/cards`
+- POST `/create_card`
+- POST `/card/search`
+- DELETE `/card/delete/{id}/{type}`
 
 ---
 
@@ -182,18 +218,18 @@ Main Routes:
 
 Features:
 
-* Add building
-* Update building
-* Delete building
-* Add room
-* Delete room
-* List all buildings and rooms
+- Add building
+- Update building
+- Delete building
+- Add room
+- Delete room
+- List all buildings and rooms
 
 Routes:
 
-* GET `/blocks/all_buildings`
-* POST `/blocks/add_building`
-* GET `/blocks/all_rooms`
+- GET `/blocks/all_buildings`
+- POST `/blocks/add_building`
+- GET `/blocks/all_rooms`
 
 ---
 
@@ -203,10 +239,10 @@ Admin / Super Admin only.
 
 Routes:
 
-* GET `/department/all_departments`
-* POST `/department/add_department`
-* PUT `/department/update_department/{id}`
-* DELETE `/department/delete_department/{id}`
+- GET `/department/all_departments`
+- POST `/department/add_department`
+- PUT `/department/update_department/{id}`
+- DELETE `/department/delete_department/{id}`
 
 ---
 
@@ -216,10 +252,10 @@ Admin / Super Admin only.
 
 Routes:
 
-* GET `/position/all_positions`
-* POST `/position/add_position`
-* PUT `/position/update_position/{id}`
-* DELETE `/position/delete_position/{id}`
+- GET `/position/all_positions`
+- POST `/position/add_position`
+- PUT `/position/update_position/{id}`
+- DELETE `/position/delete_position/{id}`
 
 ---
 
@@ -227,24 +263,24 @@ Routes:
 
 Current Features:
 
-* Add ISP
-* Update ISP
-* Delete ISP
-* List all ISP
+- Add ISP
+- Update ISP
+- Delete ISP
+- List all ISP
 
 Routes:
 
-* GET `/isp/all_isps`
-* POST `/isp/add_isp`
-* PUT `/isp/update_isp/{id}`
-* DELETE `/isp/delete_isp/{id}`
+- GET `/isp/all_isps`
+- POST `/isp/add_isp`
+- PUT `/isp/update_isp/{id}`
+- DELETE `/isp/delete_isp/{id}`
 
 Planned Improvements:
 
-* ISP Packages
-* Billing system
-* Usage tracking
-* Building-to-ISP mapping
+- ISP Packages
+- Billing system
+- Usage tracking
+- Building-to-ISP mapping
 
 ---
 
@@ -252,23 +288,23 @@ Planned Improvements:
 
 Current Features:
 
-* Add new staff
-* Get all staff
-* Get staff profile image
+- Add new staff
+- Get all staff
+- Get staff profile image
 
 Routes:
 
-* POST `/staff/add_new_staff`
-* GET `/staff/get_all_staff`
-* GET `/staff/image_profile/{staff_id}`
+- POST `/staff/add_new_staff`
+- GET `/staff/get_all_staff`
+- GET `/staff/image_profile/{staff_id}`
 
 Planned Improvements:
 
-* Update staff
-* Delete staff
-* Search/filter staff
-* Staff status management
-* File validation improvements
+- Update staff
+- Delete staff
+- Search/filter staff
+- Staff status management
+- File validation improvements
 
 ---
 
@@ -278,10 +314,10 @@ Database structure exists, but API endpoints are not implemented.
 
 Planned Features:
 
-* Create monthly roster
-* Update shift schedule
-* Filter roster by date
-* Leave/day-off integration
+- Create monthly roster
+- Update shift schedule
+- Filter roster by date
+- Leave/day-off integration
 
 ---
 
@@ -289,8 +325,8 @@ Planned Features:
 
 Some endpoints are restricted by role:
 
-* role_id = 1 → Super Admin
-* role_id = 2 → Admin
+- role_id = 1 → Super Admin
+- role_id = 2 → Admin
 
 Unauthorized access will return 403 Forbidden.
 
@@ -302,9 +338,9 @@ Standard success response:
 
 ```json
 {
-  "success": true,
-  "message": "Request successful",
-  "data": {}
+    "success": true,
+    "message": "Request successful",
+    "data": {}
 }
 ```
 
@@ -312,9 +348,9 @@ Error response:
 
 ```json
 {
-  "success": false,
-  "message": "Something went wrong",
-  "error": "Error details"
+    "success": false,
+    "message": "Something went wrong",
+    "error": "Error details"
 }
 ```
 
@@ -322,12 +358,12 @@ Error response:
 
 # 🚀 Future Improvements
 
-* Finish Roster Module
-* Complete Staff Module
-* Extend ISP Module
-* Add API documentation (Swagger)
-* Add automated tests
-* Add deployment guide
-* Add CI/CD pipeline
+- Finish Roster Module
+- Complete Staff Module
+- Extend ISP Module
+- Add API documentation (Swagger)
+- Add automated tests
+- Add deployment guide
+- Add CI/CD pipeline
 
 ---
