@@ -45,7 +45,17 @@ class AuthService
             return ResponseHelper::fail('Invalid credentials', null, 401);
         }
 
+        $accessToken = $response->json('access_token');
+        $refreshToken = $response->json('refresh_token');
+
+        $userResponse = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $accessToken,
+        ])->get(env('APP_DEV_URL') . '/api/v1/user');
+
+        $user = $userResponse->successful() ? $userResponse->json('data') : null;
+
         $data = [
+            "user" => $user,
             "access_token" => $response->json('access_token'),
             "token_type" => $response->json('token_type'),
             "expires_in" => $response->json('expires_in'),
@@ -54,7 +64,7 @@ class AuthService
         $rememberMe = $credentials['remember_me'] ? 60 * 24 * 30 : 0;
         $cookie = cookie(
             'refresh_token',
-            $response->json('refresh_token'),
+            $refreshToken,
             $rememberMe, // 30 days
             '/',
             null,
