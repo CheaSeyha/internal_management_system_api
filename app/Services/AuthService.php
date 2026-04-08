@@ -61,11 +61,24 @@ class AuthService
             "expires_in" => $response->json('expires_in'),
         ];
 
-        $rememberMe = $credentials['remember_me'] ? 60 * 24 * 30 : 0;
-        $cookie = cookie(
+        $rememberMeTtl = !empty($credentials['remember_me']) ? 60 * 24 * 30 : 0;
+        $refreshTokenCookie = cookie(
             'refresh_token',
             $refreshToken,
-            $rememberMe, // 30 days
+            $rememberMeTtl,
+            '/',
+            null,
+            false,   // secure (HTTPS)
+            true,   // httpOnly
+            false,
+            'lax'
+        );
+
+        $rememberMeCookieValue = !empty($credentials['remember_me']) ? '1' : '0';
+        $rememberMeCookie = cookie(
+            'remember_me',
+            $rememberMeCookieValue,
+            $rememberMeTtl,
             '/',
             null,
             false,   // secure (HTTPS)
@@ -78,8 +91,8 @@ class AuthService
             'Login successful',
             $data,
             200,
-            [$cookie]
-        )->withCookie($cookie);;
+            [$refreshTokenCookie, $rememberMeCookie]
+        )->withCookie($refreshTokenCookie)->withCookie($rememberMeCookie);
     }
 
     /**
@@ -121,8 +134,10 @@ class AuthService
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refreshToken($refreshToken)
+    public function refreshToken($request)
     {
+        $refreshToken = $request->cookie('refresh_token');
+
         $response = Http::asForm()->post(env('APP_DEV_URL') . '/oauth/token', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $refreshToken,
@@ -146,10 +161,25 @@ class AuthService
             "expires_in" => $response->json('expires_in'),
         ];
 
-        $cookie = cookie(
+        $rememberMeValue = $request->cookie('remember_me');
+        $rememberMeTtl = $rememberMeValue === '1' ? 60 * 24 * 30 : 0;
+
+        $refreshTokenCookie = cookie(
             'refresh_token',
             $response->json('refresh_token'),
-            60 * 24 * 30, // 30 days
+            $rememberMeTtl,
+            '/',
+            null,
+            false,   // secure (HTTPS)
+            true,   // httpOnly
+            false,
+            'lax'
+        );
+
+        $rememberMeCookie = cookie(
+            'remember_me',
+            $rememberMeValue === '1' ? '1' : '0',
+            $rememberMeTtl,
             '/',
             null,
             false,   // secure (HTTPS)
@@ -162,8 +192,8 @@ class AuthService
             'Refresh token success',
             $data,
             200,
-            [$cookie]
-        )->withCookie($cookie);;
+            [$refreshTokenCookie, $rememberMeCookie]
+        )->withCookie($refreshTokenCookie)->withCookie($rememberMeCookie);
     }
 
     /**
@@ -181,10 +211,13 @@ class AuthService
         // Revoke associated refresh token (if exists)
         $token->refreshToken?->revoke();
 
-        // Forget the refresh token cookie
-        $cookie = cookie()->forget('refresh_token');
+        // Expire both cookies by setting TTL to -1
+        $refreshTokenCookie = cookie('refresh_token', '', -1, '/', null, false, true, false, 'lax');
+        $rememberMeCookie = cookie('remember_me', '', -1, '/', null, false, true, false, 'lax');
 
         // Return response with cookie removed
-        return $this->responseHelper->success('User logged out successfully', null, 200, [$cookie]);
+        return $this->responseHelper->success('User logged out successfully', null, 200, [$refreshTokenCookie, $rememberMeCookie])
+            ->withCookie($refreshTokenCookie)
+            ->withCookie($rememberMeCookie);
     }
 }
