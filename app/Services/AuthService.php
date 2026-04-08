@@ -61,7 +61,7 @@ class AuthService
             "expires_in" => $response->json('expires_in'),
         ];
 
-        $rememberMeTtl = !empty($credentials['remember_me']) ? 60 * 24 * 30 : 0;
+        $rememberMeTtl = !empty($credentials['remember_me']) ? 60 * 24 * 30 : 60 * 24 * 1;
         $refreshTokenCookie = cookie(
             'refresh_token',
             $refreshToken,
@@ -162,7 +162,7 @@ class AuthService
         ];
 
         $rememberMeValue = $request->cookie('remember_me');
-        $rememberMeTtl = $rememberMeValue === '1' ? 60 * 24 * 30 : 0;
+        $rememberMeTtl = $rememberMeValue === '1' ? 60 * 24 * 30 : 60 * 24 * 1;
 
         $refreshTokenCookie = cookie(
             'refresh_token',
