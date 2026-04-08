@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RefreshTokenReqeust;
 use App\Http\Requests\RegisterRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Services\AuthService;
 
 class AuthController extends Controller
@@ -30,8 +29,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         try {
-            $loginResponse = $this->authService->login($request);
-            return response()->json($loginResponse->getData(), $loginResponse->getStatusCode());
+            return $this->authService->login($request); // 👈 return full response
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
@@ -84,16 +82,12 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refreshToken(Request $request)
+    public function refreshToken(RefreshTokenReqeust $request)
     {
-
-        $valdiate = $request->validate([
-            'refresh_token' => 'required',
-        ]);
-
         try {
-            $getRefreshToken = $this->authService->refreshToken($valdiate['refresh_token']);
-            return response()->json($getRefreshToken->getData());
+            $refreshToken = $request->cookie('refresh_token');
+
+            return $this->authService->refreshToken($refreshToken);
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,

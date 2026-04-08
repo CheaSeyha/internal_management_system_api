@@ -4,12 +4,8 @@ namespace App\Services;
 
 use App\Helper\ResponseHelper;
 use App\Repository\AuthRepository;
-use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Laravel\Passport\Passport;
-
-use function Pest\Laravel\json;
 
 class AuthService
 {
@@ -34,10 +30,8 @@ class AuthService
      */
     public function login($req)
     {
-        // Make sure you get only email & password
         $credentials = $req->only('email', 'password');
 
-        // Request token from Passport password grant
         $response = Http::asForm()->post('http://127.0.0.1:8001/oauth/token', [
             'grant_type' => 'password',
             'client_id' => env('CLIENT_ID'),
@@ -48,13 +42,33 @@ class AuthService
         ]);
 
         if ($response->failed()) {
-            return $this->responseHelper->fail('Invalid credentials', null, 401);
+            return ResponseHelper::fail('Invalid credentials', null, 401);
         }
 
-        // Decode the response JSON
-        $data = $response->json();
+        $data = [
+            "access_token" => $response->json('access_token'),
+            "token_type" => $response->json('token_type'),
+            "expires_in" => $response->json('expires_in'),
+        ];
 
-        return $this->responseHelper->success('Login successful', $data, 200);
+        $cookie = cookie(
+            'refresh_token',
+            $response->json('refresh_token'),
+            60 * 24 * 30, // 30 days
+            null,
+            null,
+            false,   // secure (HTTPS)
+            true,   // httpOnly
+            false,
+            'None'
+        );
+
+        return ResponseHelper::success(
+            'Login successful',
+            $data,
+            200,
+            [$cookie]
+        )->withCookie($cookie);;
     }
 
     /**
@@ -111,10 +125,34 @@ class AuthService
             return $this->responseHelper->fail('Invalid credentials', null, 401);
         }
 
-        // Decode the response JSON
-        $data = $response->json();
+        if ($response->failed()) {
+            return ResponseHelper::fail('Invalid credentials', null, 401);
+        }
 
-        return $this->responseHelper->success('User retrieved successfully', $data, 200);
+        $data = [
+            "access_token" => $response->json('access_token'),
+            "token_type" => $response->json('token_type'),
+            "expires_in" => $response->json('expires_in'),
+        ];
+
+        $cookie = cookie(
+            'refresh_token',
+            $response->json('refresh_token'),
+            60 * 24 * 30, // 30 days
+            null,
+            null,
+            false,   // secure (HTTPS)
+            true,   // httpOnly
+            false,
+            'None'
+        );
+
+        return ResponseHelper::success(
+            'Refresh token success',
+            $data,
+            200,
+            [$cookie]
+        )->withCookie($cookie);;
     }
 
     /**
@@ -126,19 +164,16 @@ class AuthService
     {
         $token = Auth::user()->token();
 
+        // Revoke access token
         $token->revoke();
+
+        // Revoke associated refresh token (if exists)
         $token->refreshToken?->revoke();
 
-        return $this->responseHelper->success('User logged out successfully', null, 200);
-    }
+        // Forget the refresh token cookie
+        $cookie = cookie()->forget('refresh_token');
 
-    protected function respondWithToken($token, $user, $message = 'Login successful')
-    {
-        // return $this->responseHelper->success($message, [
-        //     'user' => $user,
-        //     'access_token' => $token,
-        //     'token_type' => 'bearer',
-        //     'expires_in' => auth()->factory()->getTTL() * 60,
-        // ], 200);
+        // Return response with cookie removed
+        return $this->responseHelper->success('User logged out successfully', null, 200, [$cookie]);
     }
 }
