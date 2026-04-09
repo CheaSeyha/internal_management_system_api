@@ -13,7 +13,7 @@ class CheckUserRoleBase
         $user = auth()->user();
 
         // The only 2 roles we allow
-        $allowed = [1, 2]; // super admin + admin
+        $allowed = [1, 2]; // super_admin + admin
         if (!in_array($user->role_id, $allowed)) {
             return ResponseHelper::fail("Forbidden. You do not have permission to access this resource.", 403);
         }

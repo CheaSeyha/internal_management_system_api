@@ -11,7 +11,6 @@ use App\Services\AuthService;
 
 class AuthController extends Controller
 {
-
     protected $authService;
 
     public function __construct(AuthService $authService)
@@ -19,68 +18,58 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
-
-
-    /**     * Handle user login.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+    /**
+     * Handle user login.
      */
     public function login(LoginRequest $request)
     {
         try {
-            return $this->authService->login($request); // 👈 return full response
+            return $this->authService->login($request);
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
                 'message' => 'Login failed',
-                'error' => $th->getMessage(),
+                'error'   => $th->getMessage(),
             ], 500);
         }
     }
 
-    /**     * Register a new user.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+    /**
+     * Register a new user.
      */
     public function register(RegisterRequest $request)
     {
         try {
-            $registerResponse = $this->authService->register($request);
-            return response()->json($registerResponse->getData(), $registerResponse->getStatusCode());
+            $response = $this->authService->register($request);
+            return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
                 'message' => 'Registration failed',
-                'error' => $th->getMessage(),
+                'error'   => $th->getMessage(),
             ], 500);
         }
     }
 
-    /**     * Get the authenticated user.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+    /**
+     * Get the authenticated user.
      */
     public function user(Request $request)
     {
         try {
-            $getUser = $this->authService->getUser($request);
-            return response()->json($getUser->getData());
+            $response = $this->authService->getUser($request);
+            return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch user',
-                'error' => $th->getMessage(),
+                'error'   => $th->getMessage(),
             ], 500);
         }
     }
 
-
-    /**     * Get Refresh Token
-     *
-     * @return \Illuminate\Http\JsonResponse
+    /**
+     * Refresh access token.
      */
     public function refreshToken(RefreshTokenReqeust $request)
     {
@@ -89,26 +78,25 @@ class AuthController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get refresh token',
-                'error' => $th->getMessage(),
+                'message' => 'Failed to refresh token',
+                'error'   => $th->getMessage(),
             ], 500);
         }
     }
 
-    /**     * Handle user logout.
-     *
-     * @return \Illuminate\Http\JsonResponse
+    /**
+     * Handle user logout.
      */
-    public function logout()
+    public function logout(Request $request) // ✅ Added Request $request
     {
         try {
-            $logout = $this->authService->logout();
-            return response()->json($logout->getData());
+            $response = $this->authService->logout($request); // ✅ Pass $request
+            return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get refresh token',
-                'error' => $th->getMessage(),
+                'message' => 'Logout failed',
+                'error'   => $th->getMessage(),
             ], 500);
         }
     }

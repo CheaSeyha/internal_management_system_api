@@ -8,49 +8,34 @@ use Illuminate\Support\Str;
 
 class AuthRepository
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function __construct() {}
+
+    public function checkEmailExists($email): bool
     {
-        //
+        return User::where('email', $email)->exists(); // ✅ cleaner than first() check
     }
 
-    public function checkEmailExists($email)
-    {
-        // Check if user email exists
-        $user = User::where('email', $email)->first();
-        return $user ? true : false;
-    }
-
-    public function createUser($data)
+    public function createUser($data): ?User
     {
         $profileImagePath = null;
+
         if (isset($data['profile_image'])) {
-            $file = $data['profile_image'];
+            $file      = $data['profile_image'];
+            $namePart  = Str::slug($data['name']);
+            $extension = $file->getClientOriginalExtension();
+            $filename  = "{$namePart}.{$extension}";
 
-            // Sanitize name/email for file usage
-            $namePart = Str::slug($data['name']); // convert spaces/special chars to hyphens
-
-            $extension = $file->getClientOriginalExtension(); // e.g., jpg, png
-            $filename = "{$namePart}.{$extension}";
-
-            // Store in public/profile_images with custom name
-            $profileImagePath = $file->storeAs('profile_images', $filename, 'public');
-
-            // Get full URL
-            $profileImagePath = Storage::url($profileImagePath);
+            $storedPath       = $file->storeAs('profile_images', $filename, 'public');
+            $profileImagePath = Storage::url($storedPath);
         }
 
-        $createdUser = User::create([
-            'name' => $data['name'],
-            'staff_id' => $data['staff_id'],
-            'email' => $data['email'],
-            'role_id' => $data['role_id'],
+        return User::create([
+            'name'          => $data['name'],
+            'staff_id'      => $data['staff_id'],
+            'email'         => $data['email'],
+            'role_id'       => $data['role_id'],
             'profile_image' => $profileImagePath,
-            'password' => bcrypt($data['password']),
+            'password'      => bcrypt($data['password']),
         ]);
-
-        return $createdUser;
     }
 }

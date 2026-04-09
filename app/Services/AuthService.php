@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helper\ResponseHelper;
+use App\Models\User;
 use App\Repository\AuthRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -12,211 +13,153 @@ class AuthService
     protected $authRepository;
     protected $responseHelper;
 
-    /**
-     * Create a new class instance.
-     */
     public function __construct(AuthRepository $authRepository, ResponseHelper $responseHelper)
     {
-        //
         $this->authRepository = $authRepository;
         $this->responseHelper = $responseHelper;
     }
 
     /**
      * Handle user login.
-     *
-     * @param \Illuminate\Http\Request $loginRequest
-     * @return \Illuminate\Http\JsonResponse
      */
     public function login($req)
     {
         $credentials = $req->only('email', 'password', 'remember_me');
 
         $response = Http::asForm()->post(env('APP_DEV_URL') . '/oauth/token', [
-            'grant_type' => 'password',
-            'client_id' => env('CLIENT_ID'),
+            'grant_type'    => 'password',
+            'client_id'     => env('CLIENT_ID'),
             'client_secret' => env('CLIENT_SECRET'),
-            'username' => $credentials['email'],
-            'password' => $credentials['password'],
-            'scope' => '',
+            'username'      => $credentials['email'],
+            'password'      => $credentials['password'],
+            'scope'         => '',
         ]);
 
         if ($response->failed()) {
             return ResponseHelper::fail('Invalid credentials', null, 401);
         }
 
-        $accessToken = $response->json('access_token');
+        $accessToken  = $response->json('access_token');
         $refreshToken = $response->json('refresh_token');
 
-        $userResponse = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
-        ])->get(env('APP_DEV_URL') . '/api/v1/user');
-
-        $user = $userResponse->successful() ? $userResponse->json('data') : null;
+        // ✅ Get user directly from DB — no internal HTTP call needed
+        $user = User::where('email', $credentials['email'])
+            ->select('id', 'name', 'email', 'staff_id', 'role_id', 'profile_image')
+            ->first();
 
         $data = [
-            "user" => $user,
-            "access_token" => $response->json('access_token'),
-            "token_type" => $response->json('token_type'),
-            "expires_in" => $response->json('expires_in'),
+            'user'         => $user,
+            'access_token' => $accessToken,
+            'token_type'   => $response->json('token_type'),
+            'expires_in'   => $response->json('expires_in'),
         ];
 
         $rememberMeTtl = !empty($credentials['remember_me']) ? 60 * 24 * 30 : 60 * 24 * 1;
-        $refreshTokenCookie = cookie(
-            'refresh_token',
-            $refreshToken,
-            $rememberMeTtl,
-            '/',
-            null,
-            false,   // secure (HTTPS)
-            true,   // httpOnly
-            false,
-            'lax'
-        );
 
-        $rememberMeCookieValue = !empty($credentials['remember_me']) ? '1' : '0';
-        $rememberMeCookie = cookie(
-            'remember_me',
-            $rememberMeCookieValue,
-            $rememberMeTtl,
-            '/',
-            null,
-            false,   // secure (HTTPS)
-            true,   // httpOnly
-            false,
-            'lax'
-        );
+        $refreshTokenCookie = cookie('refresh_token', $refreshToken, $rememberMeTtl, '/', null, false, true, false, 'lax');
+        $rememberMeCookie   = cookie('remember_me', !empty($credentials['remember_me']) ? '1' : '0', $rememberMeTtl, '/', null, false, true, false, 'lax');
 
-        return ResponseHelper::success(
-            'Login successful',
-            $data,
-            200,
-            [$refreshTokenCookie, $rememberMeCookie]
-        )->withCookie($refreshTokenCookie)->withCookie($rememberMeCookie);
+        return ResponseHelper::success('Login successful', $data, 200)
+            ->withCookie($refreshTokenCookie)
+            ->withCookie($rememberMeCookie);
     }
 
     /**
      * Handle user registration.
-     *
-     * @param \Illuminate\Http\Request $registerRequest
-     * @return \Illuminate\Http\JsonResponse
      */
     public function register($registerRequest)
     {
         $user = $this->authRepository->createUser($registerRequest);
+
         if (!$user) {
             return $this->responseHelper->fail('User registration failed', null, 500);
         }
-
-        // If the user is created successfully, return the user data and access token
 
         return $this->responseHelper->success('User registered successfully', $user, 201);
     }
 
     /**
      * Get the authenticated user.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function getUser($request)
     {
-        $user = Auth::user();
+        // ✅ Use $request->user() — works correctly with auth:api middleware
+        $user = $request->user();
+
         if (!$user) {
-            return $this->responseHelper->fail('Unauthorized User not found', null, 404);
+            return $this->responseHelper->fail('Unauthorized, user not found', null, 401);
         }
 
         return $this->responseHelper->success('User retrieved successfully', $user, 200);
     }
 
     /**
-     * Get Refresh Token
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * Refresh access token using refresh_token cookie.
      */
     public function refreshToken($request)
     {
         $refreshToken = $request->cookie('refresh_token');
 
-        $response = Http::asForm()->post(env('APP_DEV_URL') . '/oauth/token', [
-            'grant_type' => 'refresh_token',
-            'refresh_token' => $refreshToken,
-            'client_id' => env('CLIENT_ID'),
-            'client_secret' => env('CLIENT_SECRET'), // Required for confidential clients only...
-            'scope' => '',
-        ]);
-
-
-        if ($response->failed()) {
-            return $this->responseHelper->fail('Invalid credentials', null, 401);
+        if (!$refreshToken) {
+            return $this->responseHelper->fail('Refresh token not found', null, 401);
         }
 
+        $response = Http::asForm()->post(env('APP_DEV_URL') . '/oauth/token', [
+            'grant_type'    => 'refresh_token',
+            'refresh_token' => $refreshToken,
+            'client_id'     => env('CLIENT_ID'),
+            'client_secret' => env('CLIENT_SECRET'),
+            'scope'         => '',
+        ]);
+
         if ($response->failed()) {
-            return ResponseHelper::fail('Invalid credentials', null, 401);
+            return $this->responseHelper->fail('Invalid or expired refresh token', null, 401);
         }
 
         $data = [
-            "access_token" => $response->json('access_token'),
-            "token_type" => $response->json('token_type'),
-            "expires_in" => $response->json('expires_in'),
+            'access_token' => $response->json('access_token'),
+            'token_type'   => $response->json('token_type'),
+            'expires_in'   => $response->json('expires_in'),
         ];
 
         $rememberMeValue = $request->cookie('remember_me');
-        $rememberMeTtl = $rememberMeValue === '1' ? 60 * 24 * 30 : 60 * 24 * 1;
+        $rememberMeTtl   = $rememberMeValue === '1' ? 60 * 24 * 30 : 60 * 24 * 1;
 
-        $refreshTokenCookie = cookie(
-            'refresh_token',
-            $response->json('refresh_token'),
-            $rememberMeTtl,
-            '/',
-            null,
-            false,   // secure (HTTPS)
-            true,   // httpOnly
-            false,
-            'lax'
-        );
+        $refreshTokenCookie = cookie('refresh_token', $response->json('refresh_token'), $rememberMeTtl, '/', null, false, true, false, 'lax');
+        $rememberMeCookie   = cookie('remember_me', $rememberMeValue === '1' ? '1' : '0', $rememberMeTtl, '/', null, false, true, false, 'lax');
 
-        $rememberMeCookie = cookie(
-            'remember_me',
-            $rememberMeValue === '1' ? '1' : '0',
-            $rememberMeTtl,
-            '/',
-            null,
-            false,   // secure (HTTPS)
-            true,   // httpOnly
-            false,
-            'lax'
-        );
-
-        return ResponseHelper::success(
-            'Refresh token success',
-            $data,
-            200,
-            [$refreshTokenCookie, $rememberMeCookie]
-        )->withCookie($refreshTokenCookie)->withCookie($rememberMeCookie);
+        return ResponseHelper::success('Token refreshed successfully', $data, 200)
+            ->withCookie($refreshTokenCookie)
+            ->withCookie($rememberMeCookie);
     }
 
     /**
      * Handle user logout.
-     *
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function logout()
+    public function logout($request)
     {
-        $token = Auth::user()->token();
+        // ✅ Use $request->user() with api guard — NOT Auth::user()
+        $user = $request->user();
+
+        if (!$user) {
+            return $this->responseHelper->fail('Unauthorized, user not found', null, 401);
+        }
+
+        $token = $user->token();
 
         // Revoke access token
         $token->revoke();
 
-        // Revoke associated refresh token (if exists)
-        $token->refreshToken?->revoke();
+        // Revoke refresh token if exists
+        if ($token->refreshToken) {
+            $token->refreshToken->revoke();
+        }
 
-        // Expire both cookies by setting TTL to -1
+        // Expire cookies
         $refreshTokenCookie = cookie('refresh_token', '', -1, '/', null, false, true, false, 'lax');
-        $rememberMeCookie = cookie('remember_me', '', -1, '/', null, false, true, false, 'lax');
+        $rememberMeCookie   = cookie('remember_me',   '', -1, '/', null, false, true, false, 'lax');
 
-        // Return response with cookie removed
-        return $this->responseHelper->success('User logged out successfully', null, 200, [$refreshTokenCookie, $rememberMeCookie])
+        return $this->responseHelper->success('Logged out successfully', null, 200)
             ->withCookie($refreshTokenCookie)
             ->withCookie($rememberMeCookie);
     }
