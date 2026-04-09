@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
-        Passport::tokensExpireIn(CarbonInterval::minute(1)); //access token
+        Passport::tokensExpireIn(CarbonInterval::minute(60)); //access token
         Passport::refreshTokensExpireIn(CarbonInterval::month(1)); //refresh token
         Passport::personalAccessTokensExpireIn(CarbonInterval::month(1)); //personal access token
         Passport::enablePasswordGrant();

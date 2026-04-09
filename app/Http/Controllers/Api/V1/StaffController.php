@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Helper\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AddStaffRequest;
+use App\Http\Requests\UpdateStaffRequest;
 use App\Models\Staff;
 use App\Services\StaffService;
 use Illuminate\Http\Request;
@@ -60,5 +61,41 @@ class StaffController extends Controller
         }
 
         return response()->download(storage_path('app/private/' . $path));
+    }
+
+    public function updateStaff(UpdateStaffRequest $request, $id)
+    {
+        try {
+            $response = $this->staffService->update_staff($id, $request->validated());
+            return $this->response_helper->success($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return $this->response_helper->fail('Can not update staff', 500);
+        }
+    }
+
+    public function searchStaff(Request $request)
+    {
+        try {
+            $query = $request->input('search_query', '');
+            $response = $this->staffService->searchStaff($query);
+            return $this->response_helper->success($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return $this->response_helper->fail('Can not search staff', 500);
+        }
+    }
+
+    public function deleteStaffs(Request $request)
+    {
+        $request->validate([
+            'staff_ids' => 'required|array',
+            'staff_ids.*' => 'integer|exists:staff,id',
+        ]);
+
+        try {
+            $response = $this->staffService->deleteStaffs($request->input('staff_ids'));
+            return $this->response_helper->success($response->getData(), $response->getStatusCode());
+        } catch (\Throwable $e) {
+            return $this->response_helper->fail('Can not delete staff(s)', 500);
+        }
     }
 }

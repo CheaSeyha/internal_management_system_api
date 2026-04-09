@@ -79,6 +79,9 @@ Route::prefix('v1')->group(function () {
         Route::prefix('staff')->middleware('CheckUserRoleBase')->group(function () {
             Route::post('/add_new_staff',              [StaffController::class, 'addNewStaff']);
             Route::get('/get_all_staff',               [StaffController::class, 'getAllStaff']);
+            Route::put('/update_staff/{staff_id}',     [StaffController::class, 'updateStaff']);
+            Route::post('/search_staff',               [StaffController::class, 'searchStaff']);
+            Route::delete('/delete_staffs',            [StaffController::class, 'deleteStaffs']);
             Route::get('/image_profile/{staff_id}',    [StaffController::class, 'getProfileImage']);
         });
     });

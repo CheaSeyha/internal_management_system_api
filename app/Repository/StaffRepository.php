@@ -7,6 +7,7 @@ use App\Models\Position;
 use App\Models\Staff;
 use App\Repository\AuthRepository;   // <-- import it
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 use function Symfony\Component\Clock\now;
 
@@ -98,5 +99,69 @@ class StaffRepository
         ];
 
         return $data;
+    }
+
+    public function update_staff($staff, $staff_data, $department_id, $position_id)
+    {
+        $fillable = ['staff_id', 'first_name', 'last_name', 'label_id', 'genders', 'email', 'phone_number', 'date_of_joining', 'date_of_birth'];
+        
+        foreach ($fillable as $field) {
+            if (isset($staff_data[$field])) {
+                $staff->{$field} = $staff_data[$field];
+            }
+        }
+
+        if ($department_id) {
+            $staff->department_id = $department_id;
+        }
+
+        if ($position_id) {
+            $staff->position_id = $position_id;
+        }
+
+        if (isset($staff_data['profile_picture'])) {
+            $file = $staff_data['profile_picture'];
+            
+            if ($staff->profile_picture && Storage::disk('private')->exists($staff->profile_picture)) {
+                Storage::disk('private')->delete($staff->profile_picture);
+            }
+
+            $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg';
+            $filename = 'staff_' . Str::slug($staff->first_name . '_' . $staff->last_name) . '.' . $extension;
+            $path = $file->storeAs('staff/profile_pictures', $filename, 'private');
+            $staff->profile_picture = $path;
+        }
+
+        $staff->save();
+        
+        $staff->load(['department', 'position', 'user']);
+        return $staff;
+    }
+
+    public function searchStaff($query)
+    {
+        return Staff::with(['department', 'position', 'user'])
+            ->where('first_name', 'like', "%{$query}%")
+            ->orWhere('last_name', 'like', "%{$query}%")
+            ->orWhere('staff_id', 'like', "%{$query}%")
+            ->orWhere('email', 'like', "%{$query}%")
+            ->latest()
+            ->paginate(12);
+    }
+
+    public function deleteStaffs($staff_ids)
+    {
+        $staffs = Staff::whereIn('id', $staff_ids)->get();
+        foreach ($staffs as $staff) {
+            if ($staff->profile_picture && Storage::disk('private')->exists($staff->profile_picture)) {
+                Storage::disk('private')->delete($staff->profile_picture);
+            }
+            if ($staff->user) {
+                // Also optionally delete the user's profile image if it exists and is separate from staff
+                $staff->user->delete();
+            }
+            $staff->delete();
+        }
+        return true;
     }
 }
