@@ -10,6 +10,7 @@ use App\Models\Staff;
 use App\Services\StaffService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class StaffController extends Controller
 {
@@ -27,10 +28,9 @@ class StaffController extends Controller
 
         try {
             $response = $this->staffService->add_staff($request->validated());
-
-            return $this->response_helper->success($response->getData(), $response->getStatusCode());
+            return $response;
         } catch (\Throwable $e) {
-            return $this->response_helper->fail('Can not add new staff', 500);
+            return $this->response_helper->fail('Can not add new staff' . $e->getMessage(), 500);
         }
     }
 
@@ -46,9 +46,9 @@ class StaffController extends Controller
     }
 
 
-    public function getProfileImage($id)
+    public function getProfileImage($staff_id)
     {
-        $staff = Staff::findOrFail($id);
+        $staff = Staff::where('staff_id', $staff_id)->first();
 
         if (!$staff->profile_picture) {
             return $this->response_helper->fail('No profile picture', 404);
@@ -63,13 +63,13 @@ class StaffController extends Controller
         return response()->download(storage_path('app/private/' . $path));
     }
 
-    public function updateStaff(UpdateStaffRequest $request, $id)
+    public function updateStaff(Request $request, $staff_id)
     {
         try {
-            $response = $this->staffService->update_staff($id, $request->validated());
-            return $this->response_helper->success($response->getData(), $response->getStatusCode());
+            $response = $this->staffService->update_staff($staff_id, $request->all());
+            return $response;
         } catch (\Throwable $e) {
-            return $this->response_helper->fail('Can not update staff', 500);
+            return $this->response_helper->fail('Can not update staff' . $e->getMessage(), 500);
         }
     }
 

@@ -58,8 +58,8 @@ class AddStaffRequest extends FormRequest
                 'required',
                 Rule::exists('positions', 'position_name'),
             ],
-            'date_of_birth' => 'required|date',
-            'date_of_joining' => 'required|date',
+            'date_of_birth' => 'required|date|date_format:Y-m-d',
+            'date_of_joining' => 'required|date|date_format:Y-m-d',
             'email' => 'required|email|max:255|unique:staff,email',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,webp',
         ];

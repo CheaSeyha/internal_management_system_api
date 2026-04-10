@@ -76,13 +76,13 @@ Route::prefix('v1')->group(function () {
         });
 
         // Staff — admin only
-        Route::prefix('staff')->middleware('CheckUserRoleBase')->group(function () {
-            Route::post('/add_new_staff',              [StaffController::class, 'addNewStaff']);
-            Route::get('/get_all_staff',               [StaffController::class, 'getAllStaff']);
-            Route::put('/update_staff/{staff_id}',     [StaffController::class, 'updateStaff']);
-            Route::post('/search_staff',               [StaffController::class, 'searchStaff']);
-            Route::delete('/delete_staffs',            [StaffController::class, 'deleteStaffs']);
-            Route::get('/image_profile/{staff_id}',    [StaffController::class, 'getProfileImage']);
+        Route::middleware('CheckUserRoleBase')->group(function () {
+            Route::post('/staff',                            [StaffController::class, 'addNewStaff']);
+            Route::get('/staff',                             [StaffController::class, 'getAllStaff']);
+            Route::patch('/staff/{staff_id}',                  [StaffController::class, 'updateStaff']);
+            Route::post('/staff/search',                     [StaffController::class, 'searchStaff']);
+            Route::delete('/staff/delete',                   [StaffController::class, 'deleteStaffs']);
+            Route::get('/staff/image_profile/{staff_id}',    [StaffController::class, 'getProfileImage']);
         });
     });
 });

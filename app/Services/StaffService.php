@@ -97,39 +97,14 @@ class StaffService
         );
     }
 
-    public function update_staff($id, $staff_data)
+    public function update_staff($staff_id, $staff_data)
     {
-        $staff = Staff::find($id);
-        if (!$staff) {
-            return $this->responseHelper->fail('Staff not found', null, 404);
+        try {
+            $result = $this->staffRepository->update_staff($staff_id, $staff_data);
+            return $result;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
         }
-
-        $position_id = null;
-        $department_id = null;
-
-        if (isset($staff_data['position_name'])) {
-            $getId = Position::where('position_name', $staff_data['position_name'])->first();
-
-            if (! $getId) {
-                return $this->responseHelper->fail('Position Not Found', null, 404);
-            }
-            $position_id = $getId->id;
-        }
-
-        if (isset($staff_data['department_name'])) {
-            $getDepartmentId = Department::where('department_name', $staff_data['department_name'])->first();
-
-            if (! $getDepartmentId) {
-                return $this->responseHelper->fail('Department Not Found', null, 404);
-            }
-            $department_id = $getDepartmentId->id;
-        }
-
-        $result = $this->staffRepository->update_staff($staff, $staff_data, $department_id, $position_id);
-
-        return $result
-            ? $this->responseHelper->success('Staff Updated Successfully', $result, 200)
-            : $this->responseHelper->fail('Failed to update staff', null, 500);
     }
 
     public function searchStaff($query)

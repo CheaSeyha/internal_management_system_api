@@ -22,10 +22,7 @@ class StaffRepository
 
     public function add_staff($staff_data, $department_id, $position_id, $role_id)
     {
-        // 1️⃣ Create staff record
         $createdUser = null;
-
-
 
         $staff = Staff::create([
             'staff_id'      => $staff_data['staff_id'],
@@ -68,7 +65,6 @@ class StaffRepository
 
         $staff->save();
 
-        // 2️⃣ Create linked User account if isCreatedUser is true
         $isCreatedUser = !empty($staff_data['isCreatedUser']); // true only when present and truthy
 
         if ($isCreatedUser) {
@@ -91,8 +87,6 @@ class StaffRepository
             ]);
         }
 
-
-        // 4️⃣ Prepare return data
         $data = [
             'staff' => $staff,
             'user'  => $createdUser,
@@ -101,41 +95,57 @@ class StaffRepository
         return $data;
     }
 
-    public function update_staff($staff, $staff_data, $department_id, $position_id)
+    public function update_staff($staff_id, $staff_data)
     {
-        $fillable = ['staff_id', 'first_name', 'last_name', 'label_id', 'genders', 'email', 'phone_number', 'date_of_joining', 'date_of_birth'];
-        
-        foreach ($fillable as $field) {
-            if (isset($staff_data[$field])) {
-                $staff->{$field} = $staff_data[$field];
-            }
-        }
+        try {
+            $staff = Staff::where('staff_id', $staff_id)->first();
 
-        if ($department_id) {
-            $staff->department_id = $department_id;
-        }
-
-        if ($position_id) {
-            $staff->position_id = $position_id;
-        }
-
-        if (isset($staff_data['profile_picture'])) {
-            $file = $staff_data['profile_picture'];
-            
-            if ($staff->profile_picture && Storage::disk('private')->exists($staff->profile_picture)) {
-                Storage::disk('private')->delete($staff->profile_picture);
+            if (! $staff) {
+                return 'Staff not found';
             }
 
-            $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg';
-            $filename = 'staff_' . Str::slug($staff->first_name . '_' . $staff->last_name) . '.' . $extension;
-            $path = $file->storeAs('staff/profile_pictures', $filename, 'private');
-            $staff->profile_picture = $path;
-        }
+            //Handle profile picture FIRST (if exists)
+            if (isset($staff_data['profile_picture'])) {
 
-        $staff->save();
-        
-        $staff->load(['department', 'position', 'user']);
-        return $staff;
+                $file = $staff_data['profile_picture'];
+
+                if ($staff->profile_picture) {
+                    Storage::disk('private')->delete($staff->profile_picture);
+                }
+
+                $extension = $file->getClientOriginalExtension()
+                    ?: $file->guessExtension()
+                    ?: 'jpg';
+
+                $filename = $staff->staff_id . '.' . $extension;
+
+                $path = $file->storeAs(
+                    'staff/profile_pictures',
+                    $filename,
+                    'private'
+                );
+
+                $staff->profile_picture = $path;
+            }
+
+            $staff->update([
+                'first_name' => $staff_data['first_name'] ?? $staff->first_name,
+                'last_name'  => $staff_data['last_name'] ?? $staff->last_name,
+                'label_id'   => $staff_data['label_id'] ?? $staff->label_id,
+                'genders'    => $staff_data['genders'] ?? $staff->genders,
+                'email'      => $staff_data['email'] ?? $staff->email,
+                'phone_number' => $staff_data['phone_number'] ?? $staff->phone_number,
+                'position_id'  => $staff_data['position_id'] ?? $staff->position_id,
+                'department_id' => $staff_data['department_id'] ?? $staff->department_id,
+                'status'       => $staff_data['status'] ?? $staff->status,
+                'date_of_joining' => $staff_data['date_of_joining'] ?? $staff->date_of_joining,
+                'date_of_birth'   => $staff_data['date_of_birth'] ?? $staff->date_of_birth,
+            ]);
+
+            return $staff->fresh();
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
     }
 
     public function searchStaff($query)
