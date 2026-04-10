@@ -81,7 +81,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/staff',                             [StaffController::class, 'getAllStaff']);
             Route::patch('/staff/{staff_id}',                  [StaffController::class, 'updateStaff']);
             Route::post('/staff/search',                     [StaffController::class, 'searchStaff']);
-            Route::delete('/staff/delete',                   [StaffController::class, 'deleteStaffs']);
+            Route::delete('/staff/{staff_id}',                   [StaffController::class, 'deleteStaffs']);
             Route::get('/staff/image_profile/{staff_id}',    [StaffController::class, 'getProfileImage']);
         });
     });

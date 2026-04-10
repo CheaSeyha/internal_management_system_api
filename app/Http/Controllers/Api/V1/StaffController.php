@@ -84,18 +84,13 @@ class StaffController extends Controller
         }
     }
 
-    public function deleteStaffs(Request $request)
+    public function deleteStaffs($staff_id)
     {
-        $request->validate([
-            'staff_ids' => 'required|array',
-            'staff_ids.*' => 'integer|exists:staff,id',
-        ]);
-
         try {
-            $response = $this->staffService->deleteStaffs($request->input('staff_ids'));
-            return $this->response_helper->success($response->getData(), $response->getStatusCode());
+            $response = $this->staffService->deleteStaffs($staff_id);
+            return $response;
         } catch (\Throwable $e) {
-            return $this->response_helper->fail('Can not delete staff(s)', 500);
+            return $this->response_helper->fail('Can not delete staff(s)' . $e->getMessage(), 500);
         }
     }
 }

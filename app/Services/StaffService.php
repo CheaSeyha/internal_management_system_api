@@ -123,6 +123,9 @@ class StaffService
         }
         try {
             $result = $this->staffRepository->update_staff($staff_id, $staff_data, $department_id, $position_id);
+            if (! $result) {
+                return $this->responseHelper->fail('Staff Not Found', null, 404);
+            }
             return $this->responseHelper->success('Staff Updated Successfully', $result, 200);
         } catch (\Throwable $th) {
             return $this->responseHelper->fail('Failed to update staff', null, 500);
@@ -135,11 +138,15 @@ class StaffService
         return $this->responseHelper->success('Search Result', $result, 200);
     }
 
-    public function deleteStaffs($staff_ids)
+    public function deleteStaffs($staff_id)
     {
-        $result = $this->staffRepository->deleteStaffs($staff_ids);
-        return $result
-            ? $this->responseHelper->success('Staff(s) deleted successfully', null, 200)
-            : $this->responseHelper->fail('Failed to delete staff(s)', null, 500);
+        try {
+            $result = $this->staffRepository->deleteStaffs($staff_id);
+            return $result
+                ? $this->responseHelper->success('Staff deleted successfully', null, 200)
+                : $this->responseHelper->fail('Staff Not Found', $result, 404);
+        } catch (\Throwable $th) {
+            return $this->responseHelper->fail('Failed to delete staff(s)' . $th->getMessage(), null, 500);
+        }
     }
 }

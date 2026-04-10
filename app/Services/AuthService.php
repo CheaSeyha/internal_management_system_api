@@ -54,7 +54,7 @@ class AuthService
             'expires_in'   => $response->json('expires_in'),
         ];
 
-        $rememberMeTtl = !empty($credentials['remember_me']) ? 60 * 24 * 30 : 60 * 24 * 1;
+        $rememberMeTtl = !empty($credentials['remember_me']) ? 60 * 24 * 30 : 0;
 
         $refreshTokenCookie = cookie('refresh_token', $refreshToken, $rememberMeTtl, '/', null, false, true, false, 'lax');
         $rememberMeCookie   = cookie('remember_me', !empty($credentials['remember_me']) ? '1' : '0', $rememberMeTtl, '/', null, false, true, false, 'lax');
@@ -123,7 +123,7 @@ class AuthService
         ];
 
         $rememberMeValue = $request->cookie('remember_me');
-        $rememberMeTtl   = $rememberMeValue === '1' ? 60 * 24 * 30 : 60 * 24 * 1;
+        $rememberMeTtl   = $rememberMeValue === '1' ? 60 * 24 * 30 : 0;
 
         $refreshTokenCookie = cookie('refresh_token', $response->json('refresh_token'), $rememberMeTtl, '/', null, false, true, false, 'lax');
         $rememberMeCookie   = cookie('remember_me', $rememberMeValue === '1' ? '1' : '0', $rememberMeTtl, '/', null, false, true, false, 'lax');

@@ -101,7 +101,7 @@ class StaffRepository
             $staff = Staff::where('staff_id', $staff_id)->first();
 
             if (! $staff) {
-                return 'Staff not found';
+                return false;
             }
 
             //Handle profile picture FIRST (if exists)
@@ -165,19 +165,43 @@ class StaffRepository
             ->paginate(12);
     }
 
-    public function deleteStaffs($staff_ids)
+    public function searchStaffByID($staff_id)
     {
-        $staffs = Staff::whereIn('id', $staff_ids)->get();
-        foreach ($staffs as $staff) {
-            if ($staff->profile_picture && Storage::disk('private')->exists($staff->profile_picture)) {
-                Storage::disk('private')->delete($staff->profile_picture);
+        try {
+            $staff = Staff::where('staff_id', $staff_id)->first();
+            if ($staff) {
+                $staff->load([
+                    'department:id,department_name',
+                    'position:id,position_name'
+                ]);
+                return $staff;
             }
-            if ($staff->user) {
-                // Also optionally delete the user's profile image if it exists and is separate from staff
-                $staff->user->delete();
-            }
-            $staff->delete();
+            return null;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
         }
-        return true;
+    }
+
+    public function deleteStaffs($staff_id)
+    {
+        try {
+            $staffs = Staff::where('staff_id', $staff_id)->first();
+
+            if (!$staffs) {
+                return false;
+            }
+
+            if ($staffs->profile_picture && Storage::disk('private')->exists($staffs->profile_picture)) {
+                Storage::disk('private')->delete($staffs->profile_picture);
+            }
+            if ($staffs->user) {
+                // Also optionally delete the user's profile image if it exists and is separate from staff
+                $staffs->user->delete();
+            }
+            $staffs->delete();
+            return true;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
     }
 }
