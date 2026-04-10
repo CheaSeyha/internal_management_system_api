@@ -99,11 +99,33 @@ class StaffService
 
     public function update_staff($staff_id, $staff_data)
     {
+
+        $position_id = null;
+        $department_id = null;
+        if (isset($staff_data['position_name'])) {
+            $getId = Position::where('position_name', $staff_data['position_name'])->first();
+
+            if (! $getId) {
+                return $this->responseHelper->fail('Position Not Found', null, 404);
+            }
+
+            $position_id = $getId->id;  // assign to local variable
+        }
+
+        if (isset($staff_data['department_name'])) {
+            $getDepartmentId = Department::where('department_name', $staff_data['department_name'])->first();
+
+            if (! $getDepartmentId) {
+                return $this->responseHelper->fail('Department Not Found', null, 404);
+            }
+
+            $department_id = $getDepartmentId->id;
+        }
         try {
-            $result = $this->staffRepository->update_staff($staff_id, $staff_data);
-            return $result;
+            $result = $this->staffRepository->update_staff($staff_id, $staff_data, $department_id, $position_id);
+            return $this->responseHelper->success('Staff Updated Successfully', $result, 200);
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            return $this->responseHelper->fail('Failed to update staff', null, 500);
         }
     }
 
