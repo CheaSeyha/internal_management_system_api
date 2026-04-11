@@ -38,10 +38,9 @@ class StaffController extends Controller
     {
         try {
             $response = $this->staffService->getAllStaff();
-
-            return $this->response_helper->success($response->getData(), $response->getStatusCode());
+            return $response;
         } catch (\Throwable $e) {
-            return $this->response_helper->fail('Can not get all staff', 500);
+            return $this->response_helper->fail('Can not get all staff ', 500);
         }
     }
 

@@ -34,7 +34,7 @@ class AddStaffRequest extends FormRequest
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
             'phone_number' => 'required|string',
-            'genders' => 'required|string',
+            'gender' => 'required|string',
 
 
 
