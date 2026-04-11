@@ -47,9 +47,7 @@ class StaffRepository
             $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg';
 
             // Create safe filename
-            $filename = 'staff_' .
-                Str::slug($staff_data['first_name'] . '_' . $staff_data['last_name']) .
-                '.' . $extension;
+            $filename = $staff_data['staff_id'] . '.' . $extension;
 
             // Store file
             $path = $file->storeAs(
@@ -59,7 +57,7 @@ class StaffRepository
             );
 
             // Save result
-            $staff->profile_picture = $path;
+            $staff->profile_picture = 'staff/profile_pictures/' . $staff_data['staff_id'] . '.' . $extension;
         }
 
 

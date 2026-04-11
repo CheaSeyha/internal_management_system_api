@@ -47,19 +47,23 @@ class StaffController extends Controller
 
     public function getProfileImage($staff_id)
     {
-        $staff = Staff::where('staff_id', $staff_id)->first();
+        try {
+            $staff = Staff::where('staff_id', $staff_id)->first();
 
-        if (!$staff->profile_picture) {
-            return $this->response_helper->fail('No profile picture', 404);
+            if (!$staff->profile_picture) {
+                return $this->response_helper->fail('No profile picture', 404);
+            }
+
+            $path = $staff->profile_picture;
+
+            if (!Storage::disk('private')->exists($path)) {
+                return $this->response_helper->fail('File missing', 404);
+            }
+
+            return response()->download(storage_path('app/private/' . $path));
+        } catch (\Throwable $e) {
+            return $this->response_helper->fail('Can not get profile image', 500);
         }
-
-        $path = $staff->profile_picture;
-
-        if (!Storage::disk('private')->exists($path)) {
-            return $this->response_helper->fail('File missing', 404);
-        }
-
-        return response()->download(storage_path('app/private/' . $path));
     }
 
     public function updateStaff(Request $request, $staff_id)
