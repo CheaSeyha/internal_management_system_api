@@ -3,12 +3,24 @@
 namespace App\Repository;
 
 use App\Models\Department;
+use App\Models\Position;
 
 class DepartmentRepository
 {
     public function getAllDepartments()
     {
-        return Department::all();
+        $departments = Department::all();
+        $positions = Position::all();
+
+        $data = [];
+        foreach ($departments as $department) {
+            $data[] = [
+                'department' => $department->department_name,
+                'positions' => $positions->where('department_id', $department->id)->pluck('position_name'),
+            ];
+        }
+
+        return $data;
     }
 
     public function addDepartment($department_name)

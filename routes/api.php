@@ -68,11 +68,11 @@ Route::prefix('v1')->group(function () {
         });
 
         // Departments — admin only
-        Route::prefix('department')->middleware('CheckUserRoleBase')->group(function () {
-            Route::get('/all_departments',                     [DepartmentController::class, 'getAllDepartments']);
-            Route::post('/add_department',                     [DepartmentController::class, 'addDepartment']);
-            Route::put('/update_department/{department_id}',   [DepartmentController::class, 'updateDepartment']);
-            Route::delete('/delete_department/{department_id}', [DepartmentController::class, 'deleteDepartment']);
+        Route::middleware('CheckUserRoleBase')->group(function () {
+            Route::get('/department',                     [DepartmentController::class, 'getAllDepartments']);
+            Route::post('/department',                    [DepartmentController::class, 'addDepartment']);
+            Route::put('/department/{department_id}',   [DepartmentController::class, 'updateDepartment']);
+            Route::delete('/department/{department_id}', [DepartmentController::class, 'deleteDepartment']);
         });
 
         // Staff — admin only
