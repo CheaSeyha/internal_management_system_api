@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Models\Department;
 use App\Models\Position;
+use App\Models\Role;
 use App\Models\Staff;
 use App\Repository\AuthRepository;   // <-- import it
 use Illuminate\Support\Str;
@@ -126,6 +127,7 @@ class StaffRepository
                 $staff->profile_picture = $path;
             }
 
+
             $staff->update([
                 'first_name' => $staff_data['first_name'] ?? $staff->first_name,
                 'last_name'  => $staff_data['last_name'] ?? $staff->last_name,
@@ -140,10 +142,55 @@ class StaffRepository
                 'date_of_birth'   => $staff_data['date_of_birth'] ?? $staff->date_of_birth,
             ]);
 
+            $isCreatedUser = !empty($staff_data['isCreatedUser']);
+
+            if ($isCreatedUser) {
+                $role = Role::where('role_name', $staff_data['role_name'])->first();
+                if (!$role) {
+                    throw new \Exception('Role Not Found');
+                }
+
+                if (!$staff->user) {
+                    // Create user if not exists
+                    $this->authRepo->createUser([
+                        'name'          => ($staff_data['first_name'] ?? $staff->first_name) . ' ' . ($staff_data['last_name'] ?? $staff->last_name),
+                        'staff_id'      => $staff->id,
+                        'email'         => $staff_data['email'] ?? $staff->email,
+                        'role_id'       => $role->id,
+                        'password'      => bcrypt($staff_data['password']),
+                        'profile_image' => $staff_data['profile_picture'] ?? null,
+                    ]);
+                } else {
+                    // Update user if exists
+                    $userData = [
+                        "name" => ($staff_data['first_name'] ?? $staff->first_name) . ' ' . ($staff_data['last_name'] ?? $staff->last_name),
+                        "email" => $staff_data['email'] ?? $staff->email,
+                        "role_id" => $role->id,
+                    ];
+
+                    if (!empty($staff_data['password'])) {
+                        $userData['password'] = bcrypt($staff_data['password']);
+                    }
+
+                    if (isset($staff_data['profile_picture'])) {
+                        // Use the path stored for staff if matching or handle separately
+                        $userData['profile_image'] = $staff->profile_picture;
+                    }
+
+                    $staff->user->update($userData);
+                }
+
+                $staff->update([
+                    'user_role_id' => $role->id,
+                ]);
+            }
+
+
             $staff = $staff->fresh();
             $staff->load([
                 'department:id,department_name',
-                'position:id,position_name'
+                'position:id,position_name',
+                'user'
             ]);
 
             return $staff;

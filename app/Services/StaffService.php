@@ -128,7 +128,7 @@ class StaffService
             }
             return $this->responseHelper->success('Staff Updated Successfully', $result, 200);
         } catch (\Throwable $th) {
-            return $this->responseHelper->fail('Failed to update staff', null, 500);
+            return $this->responseHelper->fail('Failed to update staff' . $th->getMessage(), null, 500);
         }
     }
 
