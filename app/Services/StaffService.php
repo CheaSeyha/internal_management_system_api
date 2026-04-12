@@ -94,6 +94,7 @@ class StaffService
             return [
                 // from user
                 'staff_id' => $staff->staff_id ?? null,
+                'label_id' => $staff->label_id ?? null,
                 'role_name' => $staff->user->role->role_name ?? null,
 
                 // from staff
@@ -104,7 +105,7 @@ class StaffService
                 'department_name' => $staff->department->department_name ?? null,
                 'position_name' => $staff->position->position_name ?? null,
 
-                'email' => $staff->user->email ?? null,
+                'email' => $staff->email ?? null,
                 'phone_number' => $staff->phone_number ?? null,
                 'genders' => $staff->genders ?? null,
                 'date_of_joining' => $staff->date_of_joining ?? null,

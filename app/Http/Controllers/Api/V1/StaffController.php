@@ -69,8 +69,8 @@ class StaffController extends Controller
     public function updateStaff(Request $request, $staff_id)
     {
         $request->validate([
-            'role_name' => 'required_if:isCreatedUser,true|in:super_admin,admin,user',
-            'password' => 'required_if:isCreatedUser,true|min:8',
+            'role_name' => 'nullable|required_if:isCreatedUser,true|in:super_admin,admin,user',
+            'password'  => 'nullable|required_if:isCreatedUser,true|min:8',
         ]);
 
         try {
