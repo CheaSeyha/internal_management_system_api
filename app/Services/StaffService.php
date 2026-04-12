@@ -83,12 +83,35 @@ class StaffService
 
     public function getAllStaff()
     {
-        // 2) All users + (optional) linked staff
         $staff_data = Staff::with([
             'department',
             'position',
             'user',
         ])->latest()->paginate(12);
+
+        // Transform data
+        $staff_data->getCollection()->transform(function ($staff) {
+            return [
+                // from user
+                'staff_id' => $staff->staff_id ?? null,
+                'role_name' => $staff->user->role->role_name ?? null,
+
+                // from staff
+                'first_name' => $staff->first_name,
+                'last_name' => $staff->last_name,
+
+                // from relations
+                'department_name' => $staff->department->department_name ?? null,
+                'position_name' => $staff->position->position_name ?? null,
+
+                'email' => $staff->user->email ?? null,
+                'phone_number' => $staff->phone_number ?? null,
+                'genders' => $staff->genders ?? null,
+                'date_of_joining' => $staff->date_of_joining ?? null,
+                'date_of_birth' => $staff->date_of_birth ?? null,
+                'status' => $staff->status ?? null,
+            ];
+        });
 
         return $this->responseHelper->success(
             'Get All Staff and Users',
