@@ -20,12 +20,17 @@ class AuthRepository
         $profileImagePath = null;
 
         if (isset($data['profile_image'])) {
-            $file      = $data['profile_image'];
-            $extension = $file->getClientOriginalExtension();
-            $filename  = "{$data['name']}.{$extension}";
-
-            $storedPath = $file->storeAs('user_profile', $filename, 'private');
-            $profileImagePath = $storedPath;
+            $file = $data['profile_image'];
+            
+            if (is_object($file) && method_exists($file, 'getClientOriginalExtension')) {
+                $extension = $file->getClientOriginalExtension();
+                $filename  = "{$data['name']}.{$extension}";
+                $storedPath = $file->storeAs('user_profile', $filename, 'private');
+                $profileImagePath = $storedPath;
+            } else {
+                // It's already a path string (e.g., from existing staff profile)
+                $profileImagePath = $file;
+            }
         }
 
         return User::create([

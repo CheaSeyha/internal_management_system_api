@@ -157,8 +157,8 @@ class StaffRepository
                         'staff_id'      => $staff->id,
                         'email'         => $staff_data['email'] ?? $staff->email,
                         'role_id'       => $role->id,
-                        'password'      => bcrypt($staff_data['password']),
-                        'profile_image' => $staff_data['profile_picture'] ?? null,
+                        'password'      => $staff_data['password'],
+                        'profile_image' => $staff_data['profile_picture'] ?? $staff->profile_picture,
                     ]);
                 } else {
                     // Update user if exists
