@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Repository\AuthRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class AuthService
 {
@@ -162,5 +163,28 @@ class AuthService
         return $this->responseHelper->success('Logged out successfully', null, 200)
             ->withCookie($refreshTokenCookie)
             ->withCookie($rememberMeCookie);
+    }
+
+
+    public function userImage($user_id)
+    {
+        try {
+            $user = User::find($user_id);
+            if (!$user) {
+                return $this->responseHelper->fail('User not found', null, 404);
+            }
+
+            $imagePath = $user->profile_image;
+            if (!$imagePath) {
+                return $this->responseHelper->fail('User image not found', null, 404);
+            }
+
+            $image = Storage::disk('private')->get($imagePath);
+            $mimeType = Storage::disk('private')->mimeType($imagePath);
+
+            return response($image, 200)->header('Content-Type', $mimeType);
+        } catch (\Throwable $th) {
+            return $this->responseHelper->fail('Failed to fetch user image', 500);
+        }
     }
 }

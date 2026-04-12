@@ -12,7 +12,7 @@ class AuthRepository
 
     public function checkEmailExists($email): bool
     {
-        return User::where('email', $email)->exists(); // ✅ cleaner than first() check
+        return User::where('email', $email)->exists();
     }
 
     public function createUser($data): ?User
@@ -21,12 +21,11 @@ class AuthRepository
 
         if (isset($data['profile_image'])) {
             $file      = $data['profile_image'];
-            $namePart  = Str::slug($data['name']);
             $extension = $file->getClientOriginalExtension();
-            $filename  = "{$namePart}.{$extension}";
+            $filename  = "{$data['name']}.{$extension}";
 
-            $storedPath       = $file->storeAs('profile_images', $filename, 'public');
-            $profileImagePath = Storage::url($storedPath);
+            $storedPath = $file->storeAs('user_profile', $filename, 'private');
+            $profileImagePath = $storedPath;
         }
 
         return User::create([

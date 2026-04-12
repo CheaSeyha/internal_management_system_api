@@ -23,8 +23,8 @@ Route::prefix('v1')->group(function () {
 
         // Auth
         Route::get('/user',    [AuthController::class, 'user']);
+        Route::get('/user/image/{user_id}',    [AuthController::class, 'userImage']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        // ✅ Removed broken: Route::post('', [AuthController::class, '']);
 
         // Cards
         Route::post('/cards_summary',                          [CardController::class, 'cards_summary']);

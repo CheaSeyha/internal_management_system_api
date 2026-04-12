@@ -100,4 +100,15 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+
+    public function userImage($user_id)
+    {
+        try {
+            $response = $this->authService->userImage($user_id);
+            return $response;
+        } catch (\Throwable $th) {
+            return $th;
+        }
+    }
 }
