@@ -96,6 +96,7 @@ class StaffService
                 'staff_id' => $staff->staff_id ?? null,
                 'label_id' => $staff->label_id ?? null,
                 'role_name' => $staff->user->role->role_name ?? null,
+                'account_status' => $staff->user->account_status ?? null,
 
                 // from staff
                 'first_name' => $staff->first_name,

@@ -35,7 +35,7 @@ class StaffRepository
             'phone_number'    => $staff_data['phone_number'] ?? null,
             'position_id'     => $position_id,
             'department_id'   => $department_id,
-            'status'          => "active",
+            'status'          => "working",
             'date_of_joining' => $staff_data['date_of_joining'],
             'date_of_birth'   => $staff_data['date_of_birth'],
         ]);
@@ -144,7 +144,7 @@ class StaffRepository
 
             $isCreatedUser = !empty($staff_data['isCreatedUser']);
 
-            if ($isCreatedUser) {
+            if ($isCreatedUser && isset($staff_data['role_name'])) {
                 $role = Role::where('role_name', $staff_data['role_name'])->first();
                 if (!$role) {
                     throw new \Exception('Role Not Found');
@@ -183,6 +183,14 @@ class StaffRepository
                 $staff->update([
                     'user_role_id' => $role->id,
                 ]);
+
+                if ($staff->user) {
+                    $staff->user->update(['account_status' => 'active']);
+                }
+            } else {
+                if ($staff->user) {
+                    $staff->user->update(['account_status' => 'inactive']);
+                }
             }
 
 

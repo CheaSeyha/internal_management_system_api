@@ -21,7 +21,7 @@ class AuthRepository
 
         if (isset($data['profile_image'])) {
             $file = $data['profile_image'];
-            
+
             if (is_object($file) && method_exists($file, 'getClientOriginalExtension')) {
                 $extension = $file->getClientOriginalExtension();
                 $filename  = "{$data['name']}.{$extension}";
@@ -39,6 +39,7 @@ class AuthRepository
             'email'         => $data['email'],
             'role_id'       => $data['role_id'],
             'profile_image' => $profileImagePath,
+            'account_status' => 'active',
             'password'      => bcrypt($data['password']),
         ]);
     }
