@@ -27,6 +27,12 @@ class AuthService
     {
         $credentials = $req->only('email', 'password', 'remember_me');
 
+        $checkAccountStatus = User::where('email', $credentials['email'])->first();
+
+        if ($checkAccountStatus->account_status !== 'active') {
+            return $this->responseHelper->fail('Account is not active', null, 401);
+        }
+
         $response = Http::asForm()->post(env('APP_DEV_URL') . '/oauth/token', [
             'grant_type'    => 'password',
             'client_id'     => env('CLIENT_ID'),
@@ -112,6 +118,14 @@ class AuthService
             'client_secret' => env('CLIENT_SECRET'),
             'scope'         => '',
         ]);
+
+        if (isset($request->user()->email)) {
+            $checkAccountStatus = User::where('email', $request->user()->email)->first();
+
+            if ($checkAccountStatus->account_status !== 'active') {
+                return $this->responseHelper->fail('Account is not active', null, 401);
+            }
+        }
 
         if ($response->failed()) {
             return $this->responseHelper->fail('Invalid or expired refresh token', null, 401);
