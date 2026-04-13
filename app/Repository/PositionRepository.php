@@ -9,7 +9,31 @@ class PositionRepository
 {
     public function getAllPositions()
     {
-        return Position::with('department')->get();
+        $positions = Position::with('department')->get();
+
+        $data = [];
+
+        foreach ($positions as $position) {
+            $deptId = $position->department_id;
+
+            // If department not exist yet → create it
+            if (!isset($data[$deptId])) {
+                $data[$deptId] = [
+                    'department_id' => $deptId,
+                    'department_name' => $position->department->department_name,
+                    'positions' => [],
+                ];
+            }
+
+            // Push position into that department
+            $data[$deptId]['positions'][] = [
+                'position_id' => $position->id,
+                'position_name' => $position->position_name,
+            ];
+        }
+
+        // Reset array index (important for clean JSON)
+        return array_values($data);
     }
 
     public function addPosition($data)
@@ -47,14 +71,14 @@ class PositionRepository
         return $position;
     }
 
-    public function deletePosition($id)
+    public function deletePosition($id, $department_id)
     {
-        $position = Position::find($id);
+        $position = Position::where('id', $id)->where('department_id', $department_id)->first();
         if (!$position) {
             return false;
+        } else {
+            $position->delete();
+            return true;
         }
-
-        $position->delete();
-        return true;
     }
 }

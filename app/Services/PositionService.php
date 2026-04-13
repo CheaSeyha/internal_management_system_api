@@ -67,10 +67,10 @@ class PositionService
     /**
      * Delete a position.
      */
-    public function deletePosition($id)
+    public function deletePosition($id, $department_id)
     {
         try {
-            $res = $this->positionRepository->deletePosition($id);
+            $res = $this->positionRepository->deletePosition($id, $department_id);
             if ($res) {
                 return $this->responseHelper->success('Position deleted successfully', $res, 200);
             }

@@ -51,8 +51,8 @@ class PositionController extends Controller
     public function updatePosition(Request $request, $position_id)
     {
         $validated = $request->validate([
-            'position_name'   => 'sometimes|required|string|unique:positions,position_name,' . $position_id,
-            'department_name' => 'sometimes|required|exists:departments,department_name',
+            'position_name'   => 'required|string|unique:positions,position_name,' . $position_id,
+            'department_name' => 'required|exists:departments,department_name',
         ]);
 
         try {
@@ -67,10 +67,10 @@ class PositionController extends Controller
         }
     }
 
-    public function deletePosition($position_id)
+    public function deletePosition($position_id, $department_id)
     {
         try {
-            $response = $this->positionService->deletePosition($position_id);
+            $response = $this->positionService->deletePosition($position_id, $department_id);
             return response()->json($response->getData(), $response->getStatusCode());
         } catch (\Throwable $e) {
             return response()->json([

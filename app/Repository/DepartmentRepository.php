@@ -15,6 +15,7 @@ class DepartmentRepository
         $data = [];
         foreach ($departments as $department) {
             $data[] = [
+                'department_id' => $department->id,
                 'department' => $department->department_name,
                 'positions' => $positions->where('department_id', $department->id)->pluck('position_name'),
             ];

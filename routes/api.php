@@ -59,24 +59,21 @@ Route::prefix('v1')->group(function () {
             Route::delete('/delete_isp/{isp_id}', [ISPController::class, 'deleteISP']);
         });
 
-        // Positions — admin only
-        Route::prefix('position')->middleware('CheckUserRoleBase')->group(function () {
-            Route::get('/all_positions',                   [PositionController::class, 'getAllPositions']);
-            Route::post('/add_position',                   [PositionController::class, 'addPosition']);
-            Route::put('/update_position/{position_id}',   [PositionController::class, 'updatePosition']);
-            Route::delete('/delete_position/{position_id}', [PositionController::class, 'deletePosition']);
-        });
-
-        // Departments — admin only
+        
         Route::middleware('CheckUserRoleBase')->group(function () {
+            // Departments — admin only
             Route::get('/department',                     [DepartmentController::class, 'getAllDepartments']);
             Route::post('/department',                    [DepartmentController::class, 'addDepartment']);
             Route::put('/department/{department_id}',   [DepartmentController::class, 'updateDepartment']);
             Route::delete('/department/{department_id}', [DepartmentController::class, 'deleteDepartment']);
-        });
 
-        // Staff — admin only
-        Route::middleware('CheckUserRoleBase')->group(function () {
+            // Positions — admin only
+            Route::get('/positions',                   [PositionController::class, 'getAllPositions']);
+            Route::post('/positions',                   [PositionController::class, 'addPosition']);
+            Route::put('/positions/{position_id}',   [PositionController::class, 'updatePosition']);
+            Route::delete('/positions/{position_id}/{department_id}', [PositionController::class, 'deletePosition']);
+
+            //Staff — admin only
             Route::post('/staff',                            [StaffController::class, 'addNewStaff']);
             Route::get('/staff',                             [StaffController::class, 'getAllStaff']);
             Route::patch('/staff/{staff_id}',                  [StaffController::class, 'updateStaff']);
