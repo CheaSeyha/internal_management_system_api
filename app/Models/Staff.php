@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Staff extends Model
@@ -49,5 +50,29 @@ class Staff extends Model
     public function rosters()
     {
         return $this->hasMany(Roster::class);
+    }
+
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        $allowedFilters = [
+            'department' => fn(Builder $q, array $values) => $q->whereHas(
+                'department',
+                fn(Builder $departmentQuery) => $departmentQuery->whereIn('department_name', $values)
+            ),
+            'position' => fn(Builder $q, array $values) => $q->whereHas(
+                'position',
+                fn(Builder $positionQuery) => $positionQuery->whereIn('position_name', $values)
+            ),
+            'employment_status' => fn(Builder $q, array $values) => $q->whereIn('status', $values),
+        ];
+
+        foreach ($allowedFilters as $filterKey => $applyFilter) {
+            $query->when(
+                !empty($filters[$filterKey]),
+                fn(Builder $builder) => $applyFilter($builder, $filters[$filterKey])
+            );
+        }
+
+        return $query;
     }
 }

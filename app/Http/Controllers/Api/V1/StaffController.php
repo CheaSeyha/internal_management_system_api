@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Helper\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AddStaffRequest;
+use App\Http\Requests\FilterEmployeesRequest;
 use App\Http\Requests\UpdateStaffRequest;
 use App\Models\Staff;
 use App\Services\StaffService;
@@ -34,10 +35,10 @@ class StaffController extends Controller
         }
     }
 
-    public function getAllStaff()
+    public function getAllStaff(FilterEmployeesRequest $request)
     {
         try {
-            $response = $this->staffService->getAllStaff();
+            $response = $this->staffService->getAllStaff($request->validated(), $request->query());
             return $response;
         } catch (\Throwable $e) {
             return $this->response_helper->fail('Can not get all staff ', 500);

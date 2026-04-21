@@ -81,13 +81,17 @@ class StaffService
             : $this->responseHelper->fail('Failed to add mew staff add', null, 500);
     }
 
-    public function getAllStaff()
+    public function getAllStaff(array $filters = [], array $queryParams = [])
     {
         $staff_data = Staff::with([
             'department',
             'position',
             'user',
-        ])->latest()->paginate(12);
+        ])
+            ->filter($filters)
+            ->latest()
+            ->paginate(10)
+            ->appends($queryParams);
 
         // Transform data
         $staff_data->getCollection()->transform(function ($staff) {
