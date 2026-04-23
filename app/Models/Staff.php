@@ -69,7 +69,8 @@ class Staff extends Model
         $searchFilters = [
             'staff_name' => fn(Builder $q, string $value) => $q->where(function (Builder $sub) use ($value) {
                 $sub->where('first_name', 'LIKE', "%{$value}%")
-                    ->orWhere('last_name', 'LIKE', "%{$value}%");
+                    ->orWhere('last_name', 'LIKE', "%{$value}%")
+                    ->orWhere('staff_id', 'LIKE', "%{$value}%");
             }),
         ];
 
