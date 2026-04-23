@@ -9,15 +9,19 @@ class DepartmentRepository
 {
     public function getAllDepartments()
     {
-        $departments = Department::all();
-        $positions = Position::all();
+        $departments = Department::with([
+            'positions.staff'
+        ])->get();
 
         $data = [];
         foreach ($departments as $department) {
             $data[] = [
                 'department_id' => $department->id,
-                'department' => $department->department_name,
-                'positions' => $positions->where('department_id', $department->id)->pluck('position_name'),
+                'department'    => $department->department_name,
+                'positions'     => $department->positions->map(fn($position) => [
+                    'position_name' => $position->position_name,
+                    'staff_count'   => $position->staff->count(),
+                ]),
             ];
         }
 

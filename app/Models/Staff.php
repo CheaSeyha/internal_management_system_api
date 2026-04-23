@@ -66,7 +66,21 @@ class Staff extends Model
             'employment_status' => fn(Builder $q, array $values) => $q->whereIn('status', $values),
         ];
 
+        $searchFilters = [
+            'staff_name' => fn(Builder $q, string $value) => $q->where(function (Builder $sub) use ($value) {
+                $sub->where('first_name', 'LIKE', "%{$value}%")
+                    ->orWhere('last_name', 'LIKE', "%{$value}%");
+            }),
+        ];
+
         foreach ($allowedFilters as $filterKey => $applyFilter) {
+            $query->when(
+                !empty($filters[$filterKey]),
+                fn(Builder $builder) => $applyFilter($builder, $filters[$filterKey])
+            );
+        }
+
+        foreach ($searchFilters as $filterKey => $applyFilter) {
             $query->when(
                 !empty($filters[$filterKey]),
                 fn(Builder $builder) => $applyFilter($builder, $filters[$filterKey])
