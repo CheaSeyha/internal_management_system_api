@@ -37,19 +37,24 @@ class Staff extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function dayoff()
-    {
-        return $this->belongsTo(Dayoff::class);
-    }
-
     public function user()
     {
         return $this->hasOne(User::class);
     }
 
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class, 'staff_id');
+    }
+
+    public function leaveBalances()
+    {
+        return $this->hasMany(LeaveBalance::class, 'staff_id');
+    }
+
     public function rosters()
     {
-        return $this->hasMany(Roster::class);
+        return $this->hasMany(Roster::class, 'staff_id');
     }
 
     public function scopeFilter(Builder $query, array $filters): Builder
