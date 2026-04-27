@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->enum('account_status', ['active', 'inactive'])->default('active');
-            //
+        Schema::create('shifts', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 100);
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->timestamps();
         });
     }
 
@@ -22,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('account_status');
-        });
+        Schema::dropIfExists('shifts');
     }
 };

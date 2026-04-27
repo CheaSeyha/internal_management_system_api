@@ -13,10 +13,24 @@ return new class extends Migration
     {
         Schema::create('rosters', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('staff_id')->nullable()->index();
-            $table->foreign('staff_id')->references('id')->on('staff')->onDelete('set null');
-            $table->json('shift_work');
+            $table->unsignedBigInteger('staff_id');
+            $table->unsignedBigInteger('shift_id')->nullable();
+            $table->date('work_date');
             $table->timestamps();
+            $table->foreign('staff_id')
+                ->references('staff_id')
+                ->on('staff')
+                ->onDelete('cascade');
+
+            $table->foreign('shift_id')
+                ->references('id')
+                ->on('shifts')
+                ->onDelete('set null');
+            $table->index('staff_id');
+            $table->index('work_date');
+            $table->index('shift_id');
+            $table->unique(['staff_id', 'work_date']);
+            $table->index(['staff_id', 'work_date']);
         });
     }
 

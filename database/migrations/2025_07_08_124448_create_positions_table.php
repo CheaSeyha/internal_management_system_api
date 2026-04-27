@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('positions', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('department_id')->nullable()->index();
+            $table->foreign('department_id')->references('id')->on('departments')->onDelete('set null');
             $table->string('position_name', 100);
             $table->timestamps();
         });

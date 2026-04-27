@@ -18,6 +18,9 @@ return new class extends Migration
             $table->string('card_name', 50);
             $table->string('profile_image', 200)->nullable();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('isp_id')->nullable()->constrained('isps')->nullOnDelete()->cascadeOnUpdate();
+            $table->string('isp_position')->nullable();
+            $table->string('rolling_link')->nullable();
             $table->timestamps();
         });
     }
