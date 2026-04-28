@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreign('position_id')->references('id')->on('positions')->onDelete('set null');
             $table->unsignedBigInteger('department_id')->nullable()->index();
             $table->foreign('department_id')->references('id')->on('departments')->onDelete('set null');
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('status', ['working', 'resigned', 'termination', 'probation', 'walkout'])->default('working');
             $table->date('date_of_joining')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->string('profile_picture')->nullable();

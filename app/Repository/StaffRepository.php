@@ -35,7 +35,6 @@ class StaffRepository
             'phone_number'    => $staff_data['phone_number'] ?? null,
             'position_id'     => $position_id,
             'department_id'   => $department_id,
-            'status'          => "working",
             'date_of_joining' => $staff_data['date_of_joining'],
             'date_of_birth'   => $staff_data['date_of_birth'],
         ]);

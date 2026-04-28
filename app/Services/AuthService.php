@@ -49,9 +49,8 @@ class AuthService
         $accessToken  = $response->json('access_token');
         $refreshToken = $response->json('refresh_token');
 
-        // ✅ Get user directly from DB — no internal HTTP call needed
         $user = User::where('email', $credentials['email'])
-            ->select('id', 'name', 'email', 'staff_id', 'role_id', 'profile_image')
+            ->select('id', 'name', 'email', 'staff_id', 'role_id')
             ->first();
 
         $data = [
@@ -90,7 +89,6 @@ class AuthService
      */
     public function getUser($request)
     {
-        // ✅ Use $request->user() — works correctly with auth:api middleware
         $user = $request->user();
 
         if (!$user) {
@@ -153,7 +151,6 @@ class AuthService
      */
     public function logout($request)
     {
-        // ✅ Use $request->user() with api guard — NOT Auth::user()
         $user = $request->user();
 
         if (!$user) {

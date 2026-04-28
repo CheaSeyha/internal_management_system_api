@@ -67,13 +67,8 @@ class StaffController extends Controller
         }
     }
 
-    public function updateStaff(Request $request, $staff_id)
+    public function updateStaff(UpdateStaffRequest $request, $staff_id)
     {
-        $request->validate([
-            'role_name' => 'nullable|required_if:isCreatedUser,true|in:super_admin,admin,user',
-            'password'  => 'nullable|required_if:isCreatedUser,true|min:8',
-        ]);
-
         try {
             $response = $this->staffService->update_staff($staff_id, $request->all());
             return $response;
