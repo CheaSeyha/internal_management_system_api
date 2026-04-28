@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CardController;
 use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\ISPController;
 use App\Http\Controllers\Api\V1\PositionController;
+use App\Http\Controllers\Api\V1\RosterController;
 use App\Http\Controllers\Api\V1\StaffController;
 use Illuminate\Support\Facades\Route;
 
@@ -59,7 +60,9 @@ Route::prefix('v1')->group(function () {
             Route::delete('/delete_isp/{isp_id}', [ISPController::class, 'deleteISP']);
         });
 
-        
+        //Roster 
+        Route::apiResource('roster', RosterController::class);
+
         Route::middleware('CheckUserRoleBase')->group(function () {
             // Departments — admin only
             Route::get('/department',                     [DepartmentController::class, 'getAllDepartments']);
