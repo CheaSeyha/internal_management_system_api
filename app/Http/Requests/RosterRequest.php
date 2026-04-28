@@ -25,14 +25,12 @@ class RosterRequest extends FormRequest
     public function rules()
     {
         return [
-            // Month (AUG, JAN, etc.)
             'month' => [
                 'required',
                 'string',
                 'in:JAN,FEB,MAR,APR,MAY,JUN,JUL,AUG,SEP,OCT,NOV,DEC',
             ],
 
-            // Year
             'year' => [
                 'required',
                 'integer',
@@ -41,23 +39,20 @@ class RosterRequest extends FormRequest
                 'max:2100',
             ],
 
-            // Staff
             'staff_id' => [
                 'required',
                 'exists:staff,staff_id',
             ],
 
-            // Rosters array
             'rosters' => [
                 'required',
                 'array',
                 'min:1',
             ],
 
-            // Each roster item
             'rosters.*.work_date' => [
                 'required',
-                'date',
+                'date_format:Y-m-d',
             ],
 
             'rosters.*.shift_id' => [

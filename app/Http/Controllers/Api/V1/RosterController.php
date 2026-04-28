@@ -5,16 +5,18 @@ namespace App\Http\Controllers\Api\V1;
 use App\Helper\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RosterRequest;
+use App\Services\RosterSerivce;
 use Illuminate\Http\Request;
 
 class RosterController extends Controller
 {
 
     protected ResponseHelper $responseHelper;
-
-    public function __construct(ResponseHelper $responseHelper)
+    protected RosterSerivce $roster_serivce;
+    public function __construct(ResponseHelper $responseHelper, RosterSerivce $roster_serivce)
     {
         $this->responseHelper = $responseHelper;
+        $this->roster_serivce = $roster_serivce;
     }
 
 
@@ -31,8 +33,7 @@ class RosterController extends Controller
      */
     public function store(RosterRequest $request)
     {
-        //
-        return $this->responseHelper->success('This is Creata Roster Route');
+        return $this->roster_serivce->createOrUpdateRoster($request->all());
     }
 
     /**
