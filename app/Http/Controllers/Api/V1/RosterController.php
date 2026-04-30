@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helper\ResponseHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetRosterRequest;
 use App\Http\Requests\RosterRequest;
 use App\Services\RosterService;
 use Illuminate\Http\Request;
@@ -23,9 +24,12 @@ class RosterController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(GetRosterRequest $request)
     {
-        //
+        $month = $request->query('month');
+        $year = $request->query('year');
+
+        return $this->roster_service->getAllRoster($month, $year);
     }
 
     /**
