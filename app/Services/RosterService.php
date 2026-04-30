@@ -100,40 +100,80 @@ class RosterService
             $user = auth()->user();
             $isSuperAdmin = $user->role_id == 1;
 
-            // Strictly get department from the authenticated user's staff record
+            // Get department strictly from authenticated user
             $departmentId = $user->staff->department_id ?? null;
 
             if (!$isSuperAdmin && !$departmentId) {
-                return $this->responseHelper->fail('Unauthorized. User has no department assigned.', null, 400);
+                return $this->responseHelper->fail(
+                    'Unauthorized. User has no department assigned.',
+                    null,
+                    400
+                );
             }
 
-            // Default to current month/year if not provided
+            // Default month/year
             $month = $month ?: strtoupper(date('M'));
             $year = $year ?: date('Y');
 
             $rosters = $this->rosterRepository->getAllRoster($month, $year, $departmentId);
 
-            $data = $rosters->groupBy('staff_id')->map(function ($staffRosters, $staffId) {
-                $firstRoster = $staffRosters->first();
-                return [
-                    'staff_id' => (string) $staffId,
-                    'first_name' => $firstRoster->staff->first_name ?? null,
-                    'last_name' => $firstRoster->staff->last_name ?? null,
-                    'department_name' => $firstRoster->staff->department->department_name ?? null,
-                    'roster' => $staffRosters->map(function ($roster) {
-                        return [
-                            'date' => $roster->work_date,
-                            'shift_name' => $roster->shift->name ?? null,
-                            'start_time' => $roster->shift->start_time ?? null,
-                            'end_time' => $roster->shift->end_time ?? null,
-                        ];
-                    })->values() // values() to reset array keys after mapping
-                ];
-            })->values(); // values() to reset keys of the outer collection
+            $data = $rosters
+                // group by department first
+                ->groupBy(function ($item) {
+                    return $item->staff->department->id ?? 0;
+                })
+                ->map(function ($departmentRosters) {
 
-            return $this->responseHelper->success('Roster fetched successfully', $data, 200);
+                    $first = $departmentRosters->first();
+                    $department = $first->staff->department ?? null;
+
+                    return [
+                        'department_id' => $department->id ?? null,
+                        'department_name' => $department->department_name ?? 'Unknown',
+
+                        // group staff inside department
+                        'staffs' => $departmentRosters
+                            ->groupBy('staff_id')
+                            ->map(function ($staffRosters) {
+
+                                $firstRoster = $staffRosters->first();
+                                $staff = $firstRoster->staff ?? null;
+
+                                return [
+                                    'staff_id' => (string) ($staff->id ?? null),
+                                    'first_name' => $staff->first_name ?? null,
+                                    'last_name' => $staff->last_name ?? null,
+
+                                    'roster' => $staffRosters->map(function ($roster) {
+                                        return [
+                                            'date' => $roster->work_date,
+                                            'shift' => [
+                                                'name' => $roster->shift->name ?? null,
+                                                'start_time' => $roster->shift->start_time ?? null,
+                                                'end_time' => $roster->shift->end_time ?? null,
+                                            ]
+                                        ];
+                                    })->values()
+                                ];
+                            })->values()
+                    ];
+                })->values();
+
+            return $this->responseHelper->success(
+                'Roster fetched successfully',
+                [
+                    'month' => $month,
+                    'year' => $year,
+                    'departments' => $data
+                ],
+                200
+            );
         } catch (\Throwable $th) {
-            return $this->responseHelper->fail('Failed to fetch roster', $th->getMessage(), 500);
+            return $this->responseHelper->fail(
+                'Failed to fetch roster',
+                $th->getMessage(),
+                500
+            );
         }
     }
 }
