@@ -31,4 +31,9 @@ class RosterRepository
     {
         return $roster->update($data);
     }
+
+    public function updateOrCreate(array $attributes, array $values)
+    {
+        return Roster::updateOrCreate($attributes, $values);
+    }
 }

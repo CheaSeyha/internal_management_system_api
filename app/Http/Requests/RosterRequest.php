@@ -39,23 +39,29 @@ class RosterRequest extends FormRequest
                 'max:2100',
             ],
 
-            'staff_id' => [
-                'required',
-                'exists:staff,staff_id',
-            ],
-
-            'rosters' => [
+            'staff_roster' => [
                 'required',
                 'array',
                 'min:1',
             ],
 
-            'rosters.*.work_date' => [
+            'staff_roster.*.staff_id' => [
+                'required',
+                'exists:staff,staff_id',
+            ],
+
+            'staff_roster.*.roster' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'staff_roster.*.roster.*.date' => [
                 'required',
                 'date_format:Y-m-d',
             ],
 
-            'rosters.*.shift_id' => [
+            'staff_roster.*.roster.*.shift_id' => [
                 'required',
                 'integer',
                 Rule::exists('shifts', 'id'),
