@@ -112,7 +112,6 @@ class RosterService
             }
 
             // Default month/year
-            $month = $month ?: strtoupper(date('M'));
             $year = $year ?: date('Y');
 
             $rosters = $this->rosterRepository->getAllRoster($month, $year, $departmentId);

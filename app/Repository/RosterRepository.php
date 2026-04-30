@@ -39,8 +39,6 @@ class RosterRepository
 
     public function getAllRoster($month, $year, $departmentId = null)
     {
-        // Convert month name (e.g., "AUG") to month number (e.g., 8)
-        $monthNumber = date('n', strtotime($month));
 
         return Roster::with(['staff', 'shift'])
             ->when($departmentId, function ($query) use ($departmentId) {
@@ -49,7 +47,7 @@ class RosterRepository
                 });
             })
             ->whereYear('work_date', $year)
-            ->whereMonth('work_date', $monthNumber)
+            ->whereMonth('work_date', $month)
             ->get();
     }
 }

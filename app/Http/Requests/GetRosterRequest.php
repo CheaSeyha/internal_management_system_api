@@ -26,8 +26,8 @@ class GetRosterRequest extends FormRequest
         return [
             'month' => [
                 'required',
-                'string',
-                'in:JAN,FEB,MAR,APR,MAY,JUN,JUL,AUG,SEP,OCT,NOV,DEC',
+                'integer',
+                'in:1,2,3,4,5,6,7,8,9,10,11,12',
             ],
             'year' => [
                 'required',
