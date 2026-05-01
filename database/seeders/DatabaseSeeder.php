@@ -19,6 +19,11 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             ShiftsSeeder::class,
+            StaffSeeder::class,
+            LeaveTypeSeeder::class,
+            LeaveBalanceSeeder::class,
+            LeaveRequestSeeder::class,
+            RosterSeeder::class,
         ]);
     }
 }
