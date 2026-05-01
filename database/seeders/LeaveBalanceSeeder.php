@@ -23,7 +23,7 @@ class LeaveBalanceSeeder extends Seeder
                         'leave_type_id' => $type->id,
                     ],
                     [
-                        'total_days' => ($type->name === 'Annual Leave') ? 18 : (($type->name === 'Sick Leave') ? 7 : 0),
+                        'total_days' => ($type->name === 'Monthly Off') ? 4 : 0,
                         'used_days' => 0,
                     ]
                 );

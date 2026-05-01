@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             ShiftsSeeder::class,
+            BuildingSeeder::class,
+            CardTypeSeeder::class,
             StaffSeeder::class,
             LeaveTypeSeeder::class,
             LeaveBalanceSeeder::class,

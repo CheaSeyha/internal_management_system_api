@@ -14,16 +14,6 @@ return new class extends Migration
             $table->string('name', 50)->unique(); // e.g., VIP, Standard
             $table->timestamps();
         });
-
-        // Insert default card types
-        DB::table('card_types')->insert([
-            ['name' => 'STAFF', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'CAR CARD', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'VIP CARD', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'CONSTRUCTION', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'TUKTUK', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'DELIVERY', 'created_at' => now(), 'updated_at' => now()],
-        ]);
     }
 
     public function down(): void

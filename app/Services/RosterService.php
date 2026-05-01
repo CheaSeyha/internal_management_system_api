@@ -121,7 +121,7 @@ class RosterService
                 ->groupBy(function ($item) {
                     return $item->staff->department->id ?? 0;
                 })
-                ->map(function ($departmentRosters) {
+                ->map(function ($departmentRosters) use ($month, $year) {
 
                     $first = $departmentRosters->first();
                     $department = $first->staff->department ?? null;
@@ -133,26 +133,55 @@ class RosterService
                         // group staff inside department
                         'staffs' => $departmentRosters
                             ->groupBy('staff_id')
-                            ->map(function ($staffRosters) {
+                            ->map(function ($staffRosters) use ($month, $year) {
 
                                 $firstRoster = $staffRosters->first();
                                 $staff = $firstRoster->staff ?? null;
+                                $user = $staff->user ?? null;
+
+                                // Determine days in month
+                                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
+                                $rostersByDay = $staffRosters->keyBy(fn($r) => (int)$r->work_date->format('d'));
+
+                                $shiftData = [];
+                                for ($day = 1; $day <= $daysInMonth; $day++) {
+                                    $roster = $rostersByDay->get($day);
+                                    if (!$roster) {
+                                        $shiftData[] = "7";
+                                        continue;
+                                    }
+
+                                    $shiftName = $roster->shift->name ?? 'OFF';
+                                    if (strtoupper($shiftName) === 'OFF') {
+                                        $shiftData[] = 'OFF';
+                                    } elseif (preg_match('/\((\d{2}):/', $shiftName, $matches)) {
+                                        $shiftData[] = (string) intval($matches[1]);
+                                    } else {
+                                        $shiftData[] = $shiftName;
+                                    }
+                                }
+
+                                // Get all Leave Balances dynamically
+                                $leaveBalances = $staff->leaveBalances->mapWithKeys(function ($balance) {
+                                    $typeName = strtolower(str_replace(' ', '_', $balance->leaveType->name));
+                                    return [
+                                        $typeName => [
+                                            'total' => (int)$balance->total_days,
+                                            'used' => (int)$balance->used_days,
+                                            'remaining' => (int)($balance->total_days - $balance->used_days),
+                                        ]
+                                    ];
+                                });
 
                                 return [
-                                    'staff_id' => (string) ($staff->id ?? null),
-                                    'first_name' => $staff->first_name ?? null,
-                                    'last_name' => $staff->last_name ?? null,
-
-                                    'roster' => $staffRosters->map(function ($roster) {
-                                        return [
-                                            'date' => $roster->work_date,
-                                            'shift' => [
-                                                'name' => $roster->shift->name ?? null,
-                                                'start_time' => $roster->shift->start_time ?? null,
-                                                'end_time' => $roster->shift->end_time ?? null,
-                                            ]
-                                        ];
-                                    })->values()
+                                    'profile_picture' => $staff->profile_picture ?? null,
+                                    'name' => ($staff->first_name ?? '') . ' ' . ($staff->last_name ?? ''),
+                                    'position' => $staff->position->position_name ?? 'N/A',
+                                    'role' => $user->role->name ?? 'STAFF',
+                                    'staff_id' => $staff->label_id ?? (string) $staff->staff_id,
+                                    'gender' => strtoupper(substr($staff->genders ?? 'M', 0, 1)),
+                                    'shift_data' => $shiftData,
+                                    'leave_balance' => $leaveBalances
                                 ];
                             })->values()
                     ];

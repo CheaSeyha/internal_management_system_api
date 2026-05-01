@@ -40,7 +40,7 @@ class RosterRepository
     public function getAllRoster($month, $year, $departmentId = null)
     {
 
-        return Roster::with(['staff', 'shift'])
+        return Roster::with(['staff.position', 'staff.department', 'staff.user.role', 'staff.leaveBalances.leaveType', 'shift'])
             ->when($departmentId, function ($query) use ($departmentId) {
                 $query->whereHas('staff', function ($q) use ($departmentId) {
                     $q->where('department_id', $departmentId);

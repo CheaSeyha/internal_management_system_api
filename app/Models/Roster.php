@@ -12,6 +12,10 @@ class Roster extends Model
         'work_date',
     ];
 
+    protected $casts = [
+        'work_date' => 'date',
+    ];
+
     public function staff()
     {
         return $this->belongsTo(Staff::class, 'staff_id', 'staff_id');

@@ -14,6 +14,10 @@ class LeaveTypeSeeder extends Seeder
     {
         $leaveTypes = [
             [
+                'name' => 'Monthly Off',
+                'description' => 'Paid monthly off time.',
+            ],
+            [
                 'name' => 'Annual Leave',
                 'description' => 'Paid time off for holidays or personal use.',
             ],
