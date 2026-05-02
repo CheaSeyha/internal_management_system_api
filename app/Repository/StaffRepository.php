@@ -153,7 +153,7 @@ class StaffRepository
                     // Create user if not exists
                     $this->authRepo->createUser([
                         'name'          => ($staff_data['first_name'] ?? $staff->first_name) . ' ' . ($staff_data['last_name'] ?? $staff->last_name),
-                        'staff_id'      => $staff->id,
+                        'staff_id'      => $staff->staff_id,
                         'email'         => $staff_data['email'] ?? $staff->email,
                         'role_id'       => $role->id,
                         'password'      => $staff_data['password'],

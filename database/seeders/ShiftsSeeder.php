@@ -19,31 +19,31 @@ class ShiftsSeeder extends Seeder
 
             // Morning Shifts
             [
-                'name' => 'Morning (07:00 - 15:00)',
+                'name' => '7',
                 'start_time' => '07:00:00',
                 'end_time'   => '15:00:00',
             ],
             [
-                'name' => 'Morning (09:00 - 17:00)',
+                'name' => '9',
                 'start_time' => '09:00:00',
                 'end_time'   => '17:00:00',
             ],
             [
-                'name' => 'Morning (11:00 - 19:00)',
+                'name' => '11',
                 'start_time' => '11:00:00',
                 'end_time'   => '19:00:00',
             ],
 
             // Afternoon Shift
             [
-                'name' => 'Afternoon (15:00 - 23:00)',
+                'name' => '15',
                 'start_time' => '15:00:00',
                 'end_time'   => '23:00:00',
             ],
 
             // Night Shift (cross-day)
             [
-                'name' => 'Night (23:00 - 07:00)',
+                'name' => '23',
                 'start_time' => '23:00:00',
                 'end_time'   => '07:00:00',
             ],

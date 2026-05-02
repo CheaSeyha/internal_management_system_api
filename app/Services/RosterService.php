@@ -48,7 +48,9 @@ class RosterService
             }
         }
 
-        return DB::transaction(function () use ($data) {
+        $shifts = DB::table('shifts')->pluck('id', 'name');
+
+        return DB::transaction(function () use ($data, $shifts) {
             try {
                 $staffRosterResults = [];
 
@@ -58,7 +60,12 @@ class RosterService
 
                     foreach ($staffItem['roster'] as $item) {
                         $workDate = $item['date'];
-                        $shiftId = $item['shift_id'];
+                        $shiftName = $item['shift_name'];
+                        $shiftId = $shifts[$shiftName] ?? null;
+
+                        if (!$shiftId) {
+                            throw new \Exception("Shift '{$shiftName}' not found.");
+                        }
 
                         $roster = $this->rosterRepository->updateOrCreate(
                             [
@@ -72,7 +79,7 @@ class RosterService
 
                         $rosterResults[] = [
                             'date' => $workDate,
-                            'shift_id' => $shiftId,
+                            'shift_name' => $shiftName,
                             'action' => $roster->wasRecentlyCreated ? 'create' : 'update',
                         ];
                     }
@@ -112,32 +119,48 @@ class RosterService
             }
 
             // Default month/year
-            $year = $year ?: date('Y');
+            $year = $year ?: (int)date('Y');
+            $month = $month ?: (int)date('m');
 
-            $rosters = $this->rosterRepository->getAllRoster($month, $year, $departmentId);
+            // Fetch ALL staff in the department (or all if superadmin)
+            $staffQuery = \App\Models\Staff::with([
+                'department',
+                'position',
+                'user.role',
+                'leaveBalances.leaveType',
+                'rosters' => function ($query) use ($month, $year) {
+                    $query->whereYear('work_date', $year)
+                        ->whereMonth('work_date', $month)
+                        ->with('shift');
+                }
+            ]);
 
-            $data = $rosters
+            if (!$isSuperAdmin) {
+                $staffQuery->where('department_id', $departmentId);
+            }
+
+            $allStaff = $staffQuery->get();
+
+            $data = $allStaff
                 // group by department first
                 ->groupBy(function ($item) {
-                    return $item->staff->department->id ?? 0;
+                    return $item->department->id ?? 0;
                 })
-                ->map(function ($departmentRosters) use ($month, $year) {
+                ->map(function ($departmentStaff, $deptId) use ($month, $year) {
 
-                    $first = $departmentRosters->first();
-                    $department = $first->staff->department ?? null;
+                    $first = $departmentStaff->first();
+                    $department = $first->department ?? null;
 
                     return [
                         'department_id' => $department->id ?? null,
                         'department_name' => $department->department_name ?? 'Unknown',
 
-                        // group staff inside department
-                        'staffs' => $departmentRosters
-                            ->groupBy('staff_id')
-                            ->map(function ($staffRosters) use ($month, $year) {
+                        // staff inside department
+                        'staffs' => $departmentStaff
+                            ->map(function ($staff) use ($month, $year) {
 
-                                $firstRoster = $staffRosters->first();
-                                $staff = $firstRoster->staff ?? null;
                                 $user = $staff->user ?? null;
+                                $staffRosters = $staff->rosters;
 
                                 // Determine days in month
                                 $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
@@ -147,7 +170,7 @@ class RosterService
                                 for ($day = 1; $day <= $daysInMonth; $day++) {
                                     $roster = $rostersByDay->get($day);
                                     if (!$roster) {
-                                        $shiftData[] = "7";
+                                        $shiftData[] = "7"; // Default to "7" if no roster in DB
                                         continue;
                                     }
 
@@ -178,7 +201,8 @@ class RosterService
                                     'name' => ($staff->first_name ?? '') . ' ' . ($staff->last_name ?? ''),
                                     'position' => $staff->position->position_name ?? 'N/A',
                                     'role' => $user->role->name ?? 'STAFF',
-                                    'staff_id' => $staff->label_id ?? (string) $staff->staff_id,
+                                    'staff_id' => $staff->staff_id ?? '',
+                                    'label_id' => (string) $staff->label_id ?? '',
                                     'gender' => strtoupper(substr($staff->genders ?? 'M', 0, 1)),
                                     'shift_data' => $shiftData,
                                     'leave_balance' => $leaveBalances
