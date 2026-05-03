@@ -9,7 +9,7 @@ class LeaveRequest extends Model
     protected $table = 'leave_requests';
 
     protected $fillable = [
-        'id',          // Foreign Key
+        'staff_id',          // Foreign Key
         'leave_type_id',     // Foreign Key
         'start_date',
         'end_date',

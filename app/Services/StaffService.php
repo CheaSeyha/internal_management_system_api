@@ -33,10 +33,10 @@ class StaffService
         $department_id = null;
         $role_id = null;
 
-        $staff = Staff::where('staff_id', $staff_data['staff_id'])->first();
+        $staff = Staff::where('id', $staff_data['id'])->first();
 
         if ($staff) {
-            return $this->responseHelper->fail('Staff ID :' . $staff_data['staff_id'] . ' already exists', null, 409);
+            return $this->responseHelper->fail('Staff ID :' . $staff_data['id'] . ' already exists', null, 409);
         }
 
 
@@ -97,7 +97,7 @@ class StaffService
         $staff_data->getCollection()->transform(function ($staff) {
             return [
                 // from user
-                'staff_id' => $staff->staff_id ?? null,
+                'id' => $staff->id ?? null,
                 'label_id' => $staff->label_id ?? null,
                 'role_name' => $staff->user->role->role_name ?? null,
                 'account_status' => $staff->user->account_status ?? null,

@@ -24,25 +24,37 @@ class RosterService
     {
         $user = auth()->user();
 
-        $isSuperAdmin = $user->role_id == 1; // HR / Company Owner
-        $isAdmin = $user->role_id == 2;      // Shift Manager / Roster Editor
+        $isSuperAdmin = $user->role_id == 1;
+        $isAdmin = $user->role_id == 2;
 
         // Authorization Check
         if (!$isSuperAdmin) {
             foreach ($data['staff_roster'] as $staffItem) {
-                $targetStaffId = $staffItem['staff_id'];
+
+                $staffId = $staffItem['staff_id'];
 
                 if ($isAdmin) {
-                    // Admin (Shift Manager) can only edit staff in their own department
-                    // We need to check the target staff's department
-                    $targetStaff = DB::table('staff')->where('staff_id', $targetStaffId)->first();
-                    if (!$targetStaff || $targetStaff->department_id != $user->staff->department_id) {
-                        return $this->responseHelper->fail('Unauthorized. You can only update rosters for staff in your department.', null, 403);
+                    // Check department
+                    $targetStaff = DB::table('staff')->where('id', $staffId)->first();
+
+                    if (
+                        !$targetStaff ||
+                        $targetStaff->department_id != $user->staff->department_id
+                    ) {
+                        return $this->responseHelper->fail(
+                            'Unauthorized. You can only update rosters for staff in your department.',
+                            null,
+                            403
+                        );
                     }
                 } else {
-                    // Regular users can only edit their own roster
-                    if ($targetStaffId != $user->staff_id) {
-                        return $this->responseHelper->fail('Unauthorized. You can only update your own roster.', null, 403);
+                    // Regular user → only own roster
+                    if ($staffId != $user->staff->id) {
+                        return $this->responseHelper->fail(
+                            'Unauthorized. You can only update your own roster.',
+                            null,
+                            403
+                        );
                     }
                 }
             }
@@ -51,14 +63,17 @@ class RosterService
         $shifts = DB::table('shifts')->pluck('id', 'name');
 
         return DB::transaction(function () use ($data, $shifts) {
+
             try {
                 $staffRosterResults = [];
 
                 foreach ($data['staff_roster'] as $staffItem) {
+
                     $staffId = $staffItem['staff_id'];
                     $rosterResults = [];
 
                     foreach ($staffItem['roster'] as $item) {
+
                         $workDate = $item['date'];
                         $shiftName = $item['shift_name'];
                         $shiftId = $shifts[$shiftName] ?? null;
@@ -90,13 +105,17 @@ class RosterService
                     ];
                 }
 
-                $responseData = [
-                    'staff_roster' => $staffRosterResults
-                ];
-
-                return $this->responseHelper->success('Roster created or updated successfully', $responseData, 200);
+                return $this->responseHelper->success(
+                    'Roster created or updated successfully',
+                    ['staff_roster' => $staffRosterResults],
+                    200
+                );
             } catch (\Throwable $th) {
-                return $this->responseHelper->fail('Failed to create or update roster', $th->getMessage(), 500);
+                return $this->responseHelper->fail(
+                    'Failed to create or update roster',
+                    $th->getMessage(),
+                    500
+                );
             }
         });
     }
@@ -201,7 +220,7 @@ class RosterService
                                     'name' => ($staff->first_name ?? '') . ' ' . ($staff->last_name ?? ''),
                                     'position' => $staff->position->position_name ?? 'N/A',
                                     'role' => $user->role->name ?? 'STAFF',
-                                    'staff_id' => $staff->staff_id ?? '',
+                                    'staff_id' => $staff->id ?? '',
                                     'label_id' => (string) $staff->label_id ?? '',
                                     'gender' => strtoupper(substr($staff->genders ?? 'M', 0, 1)),
                                     'shift_data' => $shiftData,

@@ -18,13 +18,13 @@ class UpdateStaffRequest extends FormRequest
     public function rules(): array
     {
         $staffId = $this->route('staff');
-        $staff = Staff::where('staff_id', $staffId)->first();
+        $staff = Staff::where('id', $staffId)->first();
 
         return [
-            'staff_id' => [
+            'id' => [
                 'sometimes',
                 'integer',
-                Rule::unique('staff', 'staff_id')->ignore($staff?->id),
+                Rule::unique('staff', 'id')->ignore($staff?->id),
             ],
 
             'first_name' => ['sometimes', 'string', 'max:100'],

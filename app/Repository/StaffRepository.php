@@ -26,7 +26,7 @@ class StaffRepository
         $createdUser = null;
 
         $staff = Staff::create([
-            'staff_id'      => $staff_data['staff_id'],
+            'id'              => $staff_data['id'],
             'first_name'      => $staff_data['first_name'],
             'last_name'       => $staff_data['last_name'],
             'label_id'        => $staff_data['label_id'],
@@ -47,7 +47,7 @@ class StaffRepository
             $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg';
 
             // Create safe filename
-            $filename = $staff_data['staff_id'] . '.' . $extension;
+            $filename = $staff_data['id'] . '.' . $extension;
 
             // Store file
             $path = $file->storeAs(
@@ -57,7 +57,7 @@ class StaffRepository
             );
 
             // Save result
-            $staff->profile_picture = 'staff/profile_pictures/' . $staff_data['staff_id'] . '.' . $extension;
+            $staff->profile_picture = 'staff/profile_pictures/' . $staff_data['id'] . '.' . $extension;
         }
 
 
@@ -96,7 +96,7 @@ class StaffRepository
     public function update_staff($staff_id, $staff_data, $department_id, $position_id)
     {
         try {
-            $staff = Staff::where('staff_id', $staff_id)->first();
+            $staff = Staff::where('id', $staff_id)->first();
 
             if (! $staff) {
                 return false;
@@ -115,7 +115,7 @@ class StaffRepository
                     ?: $file->guessExtension()
                     ?: 'jpg';
 
-                $filename = $staff->staff_id . '.' . $extension;
+                $filename = $staff->id . '.' . $extension;
 
                 $path = $file->storeAs(
                     'staff/profile_pictures',
@@ -153,7 +153,7 @@ class StaffRepository
                     // Create user if not exists
                     $this->authRepo->createUser([
                         'name'          => ($staff_data['first_name'] ?? $staff->first_name) . ' ' . ($staff_data['last_name'] ?? $staff->last_name),
-                        'staff_id'      => $staff->staff_id,
+                        'staff_id'      => $staff->id,
                         'email'         => $staff_data['email'] ?? $staff->email,
                         'role_id'       => $role->id,
                         'password'      => $staff_data['password'],
@@ -211,7 +211,7 @@ class StaffRepository
         return Staff::with(['department', 'position', 'user'])
             ->where('first_name', 'like', "%{$query}%")
             ->orWhere('last_name', 'like', "%{$query}%")
-            ->orWhere('staff_id', 'like', "%{$query}%")
+            ->orWhere('id', 'like', "%{$query}%")
             ->orWhere('email', 'like', "%{$query}%")
             ->latest()
             ->paginate(12);
@@ -220,7 +220,7 @@ class StaffRepository
     public function searchStaffByID($staff_id)
     {
         try {
-            $staff = Staff::where('staff_id', $staff_id)->first();
+            $staff = Staff::where('id', $staff_id)->first();
             if ($staff) {
                 $staff->load([
                     'department:id,department_name',
@@ -237,7 +237,7 @@ class StaffRepository
     public function deleteStaffs($staff_id)
     {
         try {
-            $staffs = Staff::where('staff_id', $staff_id)->first();
+            $staffs = Staff::where('id', $staff_id)->first();
 
             if (!$staffs) {
                 return false;

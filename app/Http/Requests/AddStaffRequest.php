@@ -28,7 +28,7 @@ class AddStaffRequest extends FormRequest
             'staff_id' => [
                 'required',
                 'numeric',
-                Rule::unique('staff', 'staff_id'),
+                Rule::unique('staff', 'id'),
             ],
             'label_id' => 'required|string',
             'first_name' => 'required|string|max:255',

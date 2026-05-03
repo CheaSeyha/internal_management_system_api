@@ -49,7 +49,7 @@ class StaffController extends Controller
     public function getProfileImage($staff_id)
     {
         try {
-            $staff = Staff::where('staff_id', $staff_id)->first();
+            $staff = Staff::where('id', $staff_id)->first();
 
             if (!$staff->profile_picture) {
                 return $this->response_helper->fail('No profile picture', 404);

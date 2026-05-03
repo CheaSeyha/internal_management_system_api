@@ -47,7 +47,7 @@ class RosterRequest extends FormRequest
 
             'staff_roster.*.staff_id' => [
                 'required',
-                'exists:staff,staff_id',
+                'exists:staff,id',
             ],
 
             'staff_roster.*.roster' => [
