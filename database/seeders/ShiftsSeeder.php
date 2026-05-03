@@ -16,6 +16,32 @@ class ShiftsSeeder extends Seeder
                 'start_time' => '00:00:00',
                 'end_time'   => '00:00:00',
             ],
+            // OFF Day
+            [
+                'name' => 'AL',
+                'start_time' => '00:00:00',
+                'end_time'   => '00:00:00',
+            ],
+            [
+                'name' => 'SL',
+                'start_time' => '00:00:00',
+                'end_time'   => '00:00:00',
+            ],
+            [
+                'name' => 'UL',
+                'start_time' => '00:00:00',
+                'end_time'   => '00:00:00',
+            ],
+            [
+                'name' => 'ML',
+                'start_time' => '00:00:00',
+                'end_time'   => '00:00:00',
+            ],
+            [
+                'name' => 'PL',
+                'start_time' => '00:00:00',
+                'end_time'   => '00:00:00',
+            ],
 
             // Morning Shifts
             [

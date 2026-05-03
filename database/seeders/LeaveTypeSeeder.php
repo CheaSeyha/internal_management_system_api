@@ -14,7 +14,7 @@ class LeaveTypeSeeder extends Seeder
     {
         $leaveTypes = [
             [
-                'name' => 'Monthly Off',
+                'name' => 'Off Day',
                 'description' => 'Paid monthly off time.',
             ],
             [

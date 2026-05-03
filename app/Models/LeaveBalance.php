@@ -9,7 +9,7 @@ class LeaveBalance extends Model
     protected $table = 'leave_balance';
 
     protected $fillable = [
-        'staff_id',          // Foreign Key
+        'id',          // Foreign Key
         'leave_type_id',     // Foreign Key
         'total_days',           // Current balance
         'used_days',              // Days used
@@ -17,11 +17,11 @@ class LeaveBalance extends Model
 
     public function staff()
     {
-        return $this->belongsTo(Staff::class, 'staff_id');
+        return $this->belongsTo(Staff::class);
     }
 
     public function leaveType()
     {
-        return $this->belongsTo(LeaveType::class, 'leave_type_id');
+        return $this->belongsTo(LeaveType::class);
     }
 }

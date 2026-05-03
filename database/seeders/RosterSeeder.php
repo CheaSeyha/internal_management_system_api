@@ -13,21 +13,25 @@ class RosterSeeder extends Seeder
     public function run(): void
     {
         $staffMembers = \App\Models\Staff::all();
-        $shifts = \App\Models\Shift::where('name', '!=', 'OFF')->get();
-        $offShift = \App\Models\Shift::where('name', 'OFF')->first();
 
         foreach ($staffMembers as $staff) {
+
+            if (!$staff || !$staff->id) {
+                dd('Invalid staff found', $staff);
+            }
+
             for ($i = 0; $i < 7; $i++) {
+
                 $date = now()->addDays($i)->format('Y-m-d');
                 $isWeekend = now()->addDays($i)->isWeekend();
 
                 \App\Models\Roster::updateOrCreate(
                     [
-                        'staff_id' => $staff->staff_id, // Roster uses staff_id (not id)
+                        'staff_id' => $staff->id,
                         'work_date' => $date,
                     ],
                     [
-                        'shift_id' => $isWeekend ? ($offShift->id ?? null) : $shifts->random()->id,
+                        'shift_id' => $isWeekend ? 1 : 2, // temporary test
                     ]
                 );
             }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Roster extends Model
 {
     protected $fillable = [
+        'id',          // Foreign Key
         'staff_id',          // Foreign Key
         'shift_id',          // Foreign Key
         'work_date',
@@ -18,11 +19,11 @@ class Roster extends Model
 
     public function staff()
     {
-        return $this->belongsTo(Staff::class, 'staff_id', 'staff_id');
+        return $this->belongsTo(Staff::class);
     }
 
     public function shift()
     {
-        return $this->belongsTo(Shift::class, 'shift_id');
+        return $this->belongsTo(Shift::class);
     }
 }

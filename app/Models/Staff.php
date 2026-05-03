@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Staff extends Model
 {
     protected $fillable = [
-        'staff_id',
+        'id',
         'first_name',
         'last_name',
         'genders',
@@ -44,17 +44,17 @@ class Staff extends Model
 
     public function leaveRequests()
     {
-        return $this->hasMany(LeaveRequest::class, 'staff_id');
+        return $this->hasMany(LeaveRequest::class);
     }
 
     public function leaveBalances()
     {
-        return $this->hasMany(LeaveBalance::class, 'staff_id');
+        return $this->hasMany(LeaveBalance::class);
     }
 
     public function rosters()
     {
-        return $this->hasMany(Roster::class, 'staff_id');
+        return $this->hasMany(Roster::class);
     }
 
     public function scopeFilter(Builder $query, array $filters): Builder

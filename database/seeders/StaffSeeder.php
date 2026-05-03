@@ -14,7 +14,7 @@ class StaffSeeder extends Seeder
     {
         $staffMembers = [
             [
-                'staff_id' => 1001,
+                'id' => 1001,
                 'label_id' => 'STF-001',
                 'first_name' => 'John',
                 'last_name' => 'Doe',
@@ -27,7 +27,7 @@ class StaffSeeder extends Seeder
                 'date_of_joining' => '2023-01-01',
             ],
             [
-                'staff_id' => 1002,
+                'id' => 1002,
                 'label_id' => 'STF-002',
                 'first_name' => 'Jane',
                 'last_name' => 'Smith',
@@ -40,7 +40,7 @@ class StaffSeeder extends Seeder
                 'date_of_joining' => '2023-02-01',
             ],
             [
-                'staff_id' => 1003,
+                'id' => 1003,
                 'label_id' => 'STF-003',
                 'first_name' => 'Alice',
                 'last_name' => 'Johnson',
@@ -55,7 +55,7 @@ class StaffSeeder extends Seeder
         ];
 
         foreach ($staffMembers as $staff) {
-            \App\Models\Staff::updateOrCreate(['staff_id' => $staff['staff_id']], $staff);
+            \App\Models\Staff::updateOrCreate($staff);
         }
     }
 }

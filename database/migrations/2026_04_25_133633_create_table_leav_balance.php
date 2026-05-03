@@ -16,16 +16,16 @@ return new class extends Migration
 
             $table->foreignId('staff_id')
                 ->constrained('staff')
-                ->cascadeOnDelete()
+                ->onDelete('cascade')
                 ->cascadeOnUpdate();
 
             $table->foreignId('leave_type_id')
                 ->constrained('leave_types')
-                ->cascadeOnDelete()
+                ->onDelete('cascade')
                 ->cascadeOnUpdate();
-            
-            $table->integer('total_days');//balance remain of this month
-            $table->integer('used_days');//balacne that use of this month
+
+            $table->integer('total_days'); //balance remain of this month
+            $table->integer('used_days'); //balacne that use of this month
 
             $table->timestamps();
         });

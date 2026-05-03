@@ -63,7 +63,7 @@ class User extends Authenticatable
 
     public function staff()
     {
-        return $this->belongsTo(Staff::class, 'staff_id', 'staff_id');
+        return $this->belongsTo(Staff::class);
     }
 
     public function role()
