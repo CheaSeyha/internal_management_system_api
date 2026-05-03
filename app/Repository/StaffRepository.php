@@ -26,7 +26,7 @@ class StaffRepository
         $createdUser = null;
 
         $staff = Staff::create([
-            'id'              => $staff_data['id'],
+            'id'              => $staff_data['staff_id'],
             'first_name'      => $staff_data['first_name'],
             'last_name'       => $staff_data['last_name'],
             'label_id'        => $staff_data['label_id'],
@@ -47,7 +47,7 @@ class StaffRepository
             $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg';
 
             // Create safe filename
-            $filename = $staff_data['id'] . '.' . $extension;
+            $filename = $staff_data['staff_id'] . '.' . $extension;
 
             // Store file
             $path = $file->storeAs(
@@ -57,7 +57,7 @@ class StaffRepository
             );
 
             // Save result
-            $staff->profile_picture = 'staff/profile_pictures/' . $staff_data['id'] . '.' . $extension;
+            $staff->profile_picture = 'staff/profile_pictures/' . $staff_data['staff_id'] . '.' . $extension;
         }
 
 

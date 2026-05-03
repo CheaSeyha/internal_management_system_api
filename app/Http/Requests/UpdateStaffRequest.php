@@ -17,11 +17,11 @@ class UpdateStaffRequest extends FormRequest
 
     public function rules(): array
     {
-        $staffId = $this->route('staff');
+        $staffId = $this->route('staff_id');
         $staff = Staff::where('id', $staffId)->first();
 
         return [
-            'id' => [
+            'staff_id' => [
                 'sometimes',
                 'integer',
                 Rule::unique('staff', 'id')->ignore($staff?->id),
@@ -32,7 +32,7 @@ class UpdateStaffRequest extends FormRequest
 
             'label_id'   => ['sometimes', 'string', 'max:50'],
 
-            'gender'     => ['sometimes', 'in:m,f,M,F,other'],
+            'gender'     => ['sometimes', 'in:male,female,other'],
 
             'email'      => [
                 'sometimes',
@@ -62,7 +62,7 @@ class UpdateStaffRequest extends FormRequest
 
             'status' => [
                 'sometimes',
-                Rule::in(['working', 'resigned', 'termination', 'probation', 'walkout']),
+                Rule::in(['working', 'resigned', 'terminated', 'probation', 'walkout']),
             ],
 
             'date_of_joining' => ['sometimes', 'date'],
