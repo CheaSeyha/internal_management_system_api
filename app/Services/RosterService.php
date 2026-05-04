@@ -192,7 +192,7 @@ class RosterService
                                 for ($day = 1; $day <= $daysInMonth; $day++) {
                                     $roster = $rostersByDay->get($day);
                                     if (!$roster) {
-                                        $shiftData[] = "7"; // Default to "7" if no roster in DB
+                                        $shiftData[] = null; // Default to null if no roster in DB
                                         continue;
                                     }
 
@@ -216,7 +216,38 @@ class RosterService
                                             'remaining' => (int)($balance->total_days - $balance->used_days),
                                         ]
                                     ];
-                                });
+                                })->toArray();
+
+                                // --- DYNAMIC OFF DAY BALANCE CALCULATION (Snapshot for the viewed month) ---
+                                $offShiftId = DB::table('shifts')->where('name', 'OFF')->value('id');
+                                $offLeaveTypeId = DB::table('leave_types')->where('name', 'LIKE', '%OFF%')->value('id');
+
+                                $joiningDate = $staff->date_of_joining ? \Carbon\Carbon::parse($staff->date_of_joining) : null;
+                                $rosterMonthDate = \Carbon\Carbon::create($year, $month, 1)->endOfMonth();
+
+                                if ($joiningDate && $offShiftId && $offLeaveTypeId) {
+                                    // 1. Accrued up to the end of the viewed month
+                                    if ($joiningDate->greaterThan($rosterMonthDate)) {
+                                        $accruedUpToMonth = 0;
+                                    } else {
+                                        $monthsDiff = $joiningDate->diffInMonths($rosterMonthDate) + 1;
+                                        $accruedUpToMonth = $monthsDiff * 4;
+                                    }
+
+                                    // 2. Used up to the end of the viewed month
+                                    $usedUpToMonth = DB::table('rosters')
+                                        ->where('staff_id', $staff->id)
+                                        ->where('shift_id', $offShiftId)
+                                        ->where('work_date', '<=', $rosterMonthDate->format('Y-m-d'))
+                                        ->count();
+
+                                    // 3. Inject/Override the "off_day" balance for this month's view
+                                    $leaveBalances['off_day'] = [
+                                        'total' => (int)$accruedUpToMonth,
+                                        'used' => (int)$usedUpToMonth,
+                                        'remaining' => (int)($accruedUpToMonth - $usedUpToMonth),
+                                    ];
+                                }
 
                                 return [
                                     'profile_picture' => $staff->profile_picture ?? null,
@@ -255,7 +286,7 @@ class RosterService
      * Synchronize the OFF day leave balance based on the monthly roster.
      */
     /**
-     * Synchronize the OFF day leave balance based on cumulative accrual and usage.
+     * Synchronize the OFF day leave balance based on cumulative accrual and usage up to a specific month.
      */
     private function syncOffDayBalance($staffId, $month, $year)
     {
@@ -268,16 +299,23 @@ class RosterService
         if (!$staff || !$staff->date_of_joining) return;
 
         $joiningDate = \Carbon\Carbon::parse($staff->date_of_joining);
-        $currentDate = \Carbon\Carbon::now();
-        
-        // Calculate total months since joining (including the current month)
-        $totalMonths = $joiningDate->diffInMonths($currentDate) + 1;
-        $totalAccruedDays = $totalMonths * 4;
 
-        // 3. Count ALL roster entries marked as OFF for this staff (Lifetime usage)
+        // Use the end of the specified roster month for calculation
+        $rosterMonthDate = \Carbon\Carbon::create($year, $month, 1)->endOfMonth();
+
+        // Calculate total months since joining up to the target month
+        if ($joiningDate->greaterThan($rosterMonthDate)) {
+            $totalAccruedDays = 0;
+        } else {
+            $totalMonths = $joiningDate->diffInMonths($rosterMonthDate) + 1;
+            $totalAccruedDays = $totalMonths * 4;
+        }
+
+        // 3. Count roster entries marked as OFF up to the target month
         $totalUsedOffDays = DB::table('rosters')
             ->where('staff_id', $staffId)
             ->where('shift_id', $offShiftId)
+            ->where('work_date', '<=', $rosterMonthDate->format('Y-m-d'))
             ->count();
 
         // 4. Get the "OFF Day" leave type ID
