@@ -24,21 +24,7 @@ class StaffRepository
     public function add_staff($staff_data, $department_id, $position_id, $role_id)
     {
         $createdUser = null;
-
-        $staff = Staff::create([
-            'id'              => $staff_data['staff_id'],
-            'first_name'      => $staff_data['first_name'],
-            'last_name'       => $staff_data['last_name'],
-            'label_id'        => $staff_data['label_id'],
-            'genders'         => $staff_data['gender'],
-            'email'           => $staff_data['email'],
-            'phone_number'    => $staff_data['phone_number'] ?? null,
-            'position_id'     => $position_id,
-            'department_id'   => $department_id,
-            'date_of_joining' => $staff_data['date_of_joining'],
-            'date_of_birth'   => $staff_data['date_of_birth'],
-        ]);
-
+        $profile_picture_path = null;
 
         if (isset($staff_data['profile_picture'])) {
             $file = $staff_data['profile_picture'];
@@ -56,12 +42,24 @@ class StaffRepository
                 'private'
             );
 
-            // Save result
-            $staff->profile_picture = 'staff/profile_pictures/' . $staff_data['staff_id'] . '.' . $extension;
+            // Save result path
+            $profile_picture_path = $path;
         }
 
-
-        $staff->save();
+        $staff = Staff::create([
+            'id'              => $staff_data['staff_id'],
+            'first_name'      => $staff_data['first_name'],
+            'last_name'       => $staff_data['last_name'],
+            'label_id'        => $staff_data['label_id'],
+            'genders'         => $staff_data['gender'],
+            'email'           => $staff_data['email'],
+            'phone_number'    => $staff_data['phone_number'] ?? null,
+            'position_id'     => $position_id,
+            'department_id'   => $department_id,
+            'date_of_joining' => $staff_data['date_of_joining'],
+            'date_of_birth'   => $staff_data['date_of_birth'],
+            'profile_picture' => $profile_picture_path,
+        ]);
 
         $isCreatedUser = !empty($staff_data['isCreatedUser']); // true only when present and truthy
 
@@ -72,7 +70,7 @@ class StaffRepository
                 'email'         => $staff_data['email'],
                 'role_id'       => $role_id,
                 'password'      => $staff_data['password'],
-                'profile_image' => $staff_data['profile_picture'],
+                'profile_picture' => $staff_data['profile_picture'],
             ]);
 
             $staff->load([
@@ -127,7 +125,7 @@ class StaffRepository
             }
 
 
-            $staff->update([
+            $updateData = [
                 'first_name' => $staff_data['first_name'] ?? $staff->first_name,
                 'last_name'  => $staff_data['last_name'] ?? $staff->last_name,
                 'label_id'   => $staff_data['label_id'] ?? $staff->label_id,
@@ -139,7 +137,13 @@ class StaffRepository
                 'status'       => $staff_data['status'] ?? $staff->status,
                 'date_of_joining' => $staff_data['date_of_joining'] ?? $staff->date_of_joining,
                 'date_of_birth'   => $staff_data['date_of_birth'] ?? $staff->date_of_birth,
-            ]);
+            ];
+
+            if (isset($staff_data['profile_picture'])) {
+                $updateData['profile_picture'] = $staff->profile_picture;
+            }
+
+            $staff->update($updateData);
 
             $isCreatedUser = !empty($staff_data['isCreatedUser']);
 
