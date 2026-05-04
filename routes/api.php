@@ -62,7 +62,7 @@ Route::prefix('v1')->group(function () {
 
         //Roster 
         Route::apiResource('roster', RosterController::class);
-
+        Route::get('/staff/image_profile/{staff_id}',    [StaffController::class, 'getProfileImage']);
         Route::middleware('CheckUserRoleBase')->group(function () {
             // Departments — admin only
             Route::get('/department',                     [DepartmentController::class, 'getAllDepartments']);
@@ -82,7 +82,6 @@ Route::prefix('v1')->group(function () {
             Route::patch('/staff/{staff_id}',                  [StaffController::class, 'updateStaff']);
             Route::post('/staff/search',                     [StaffController::class, 'searchStaff']);
             Route::delete('/staff/{staff_id}',                   [StaffController::class, 'deleteStaffs']);
-            Route::get('/staff/image_profile/{staff_id}',    [StaffController::class, 'getProfileImage']);
         });
     });
 });

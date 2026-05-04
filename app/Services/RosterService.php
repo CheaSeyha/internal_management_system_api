@@ -103,6 +103,9 @@ class RosterService
                         'staff_id' => (string) $staffId,
                         'roster' => $rosterResults
                     ];
+
+                    // Sync OFF day leave balance for this staff and this month
+                    $this->syncOffDayBalance($staffId, $data['month'], $data['year']);
                 }
 
                 return $this->responseHelper->success(
@@ -244,6 +247,57 @@ class RosterService
                 'Failed to fetch roster',
                 $th->getMessage(),
                 500
+            );
+        }
+    }
+
+    /**
+     * Synchronize the OFF day leave balance based on the monthly roster.
+     */
+    /**
+     * Synchronize the OFF day leave balance based on cumulative accrual and usage.
+     */
+    private function syncOffDayBalance($staffId, $month, $year)
+    {
+        // 1. Get the "OFF" shift ID
+        $offShiftId = DB::table('shifts')->where('name', 'OFF')->value('id');
+        if (!$offShiftId) return;
+
+        // 2. Get Staff Joining Date to calculate total entitlement
+        $staff = DB::table('staff')->where('id', $staffId)->first();
+        if (!$staff || !$staff->date_of_joining) return;
+
+        $joiningDate = \Carbon\Carbon::parse($staff->date_of_joining);
+        $currentDate = \Carbon\Carbon::now();
+        
+        // Calculate total months since joining (including the current month)
+        $totalMonths = $joiningDate->diffInMonths($currentDate) + 1;
+        $totalAccruedDays = $totalMonths * 4;
+
+        // 3. Count ALL roster entries marked as OFF for this staff (Lifetime usage)
+        $totalUsedOffDays = DB::table('rosters')
+            ->where('staff_id', $staffId)
+            ->where('shift_id', $offShiftId)
+            ->count();
+
+        // 4. Get the "OFF Day" leave type ID
+        $offLeaveTypeId = DB::table('leave_types')
+            ->where('name', 'LIKE', '%OFF%')
+            ->value('id');
+
+        if ($offLeaveTypeId) {
+            // 5. Update or Create the leave_balance record
+            DB::table('leave_balance')->updateOrInsert(
+                [
+                    'staff_id' => $staffId,
+                    'leave_type_id' => $offLeaveTypeId
+                ],
+                [
+                    'total_days' => $totalAccruedDays,
+                    'used_days' => $totalUsedOffDays,
+                    'updated_at' => now(),
+                    'created_at' => DB::raw('IFNULL(created_at, NOW())')
+                ]
             );
         }
     }
