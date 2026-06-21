@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Helper\ResponseHelper;
 use App\Repository\RosterRepository;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class RosterService
@@ -142,8 +141,34 @@ class RosterService
             }
 
             // Default month/year
-            $year = $year ?: (int)date('Y');
-            $month = $month ?: (int)date('m');
+            $year = (int) ($year ?: date('Y'));
+
+            if (!is_numeric($month)) {
+                $month = strtoupper($month);
+
+                $monthMap = [
+                    'JAN' => 1,
+                    'FEB' => 2,
+                    'MAR' => 3,
+                    'APR' => 4,
+                    'MAY' => 5,
+                    'JUN' => 6,
+                    'JUL' => 7,
+                    'AUG' => 8,
+                    'SEP' => 9,
+                    'OCT' => 10,
+                    'NOV' => 11,
+                    'DEC' => 12
+                ];
+
+                $month = $monthMap[$month] ?? (int)date('m');
+            } else {
+                $month = (int)$month;
+            }
+
+            if ($month < 1 || $month > 12) {
+                throw new \Exception("Invalid month value: {$month}");
+            }
 
             // Fetch ALL staff in the department (or all if superadmin)
             $staffQuery = \App\Models\Staff::with([
@@ -186,7 +211,7 @@ class RosterService
                                 $staffRosters = $staff->rosters;
 
                                 // Determine days in month
-                                $daysInMonth = Carbon::create($year, $month)->daysInMonth;
+                                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
                                 $rostersByDay = $staffRosters->keyBy(fn($r) => (int)$r->work_date->format('d'));
 
                                 $shiftData = [];
@@ -221,32 +246,40 @@ class RosterService
 
                                 // --- DYNAMIC OFF DAY BALANCE CALCULATION (Snapshot for the viewed month) ---
                                 $offShiftId = DB::table('shifts')->where('name', 'OFF')->value('id');
-                                $offLeaveTypeId = DB::table('leave_types')->where('name', 'LIKE', '%OFF%')->value('id');
 
-                                $joiningDate = $staff->date_of_joining ? \Carbon\Carbon::parse($staff->date_of_joining) : null;
-                                $rosterMonthDate = \Carbon\Carbon::create($year, $month, 1)->endOfMonth();
+                                $joiningDate = $staff->date_of_joining
+                                    ? \Carbon\Carbon::parse($staff->date_of_joining)
+                                    : null;
 
-                                if ($joiningDate && $offShiftId && $offLeaveTypeId) {
-                                    // 1. Accrued up to the end of the viewed month
-                                    if ($joiningDate->greaterThan($rosterMonthDate)) {
+                                $viewStart = \Carbon\Carbon::create($year, $month, 1)->startOfMonth();
+                                $viewEnd = \Carbon\Carbon::create($year, $month, 1)->endOfMonth();
+
+                                if ($joiningDate && $offShiftId) {
+
+                                    // FIX: normalize joining date to month start (prevents miscalculation)
+                                    $joiningMonthStart = $joiningDate->copy()->startOfMonth();
+
+                                    if ($joiningMonthStart->greaterThan($viewEnd)) {
                                         $accruedUpToMonth = 0;
                                     } else {
-                                        $monthsDiff = $joiningDate->diffInMonths($rosterMonthDate) + 1;
-                                        $accruedUpToMonth = $monthsDiff * 4;
+                                        $monthsDiff = $joiningMonthStart->diffInMonths($viewStart) + 1;
+                                        $accruedUpToMonth = max(0, $monthsDiff * 4);
                                     }
 
-                                    // 2. Used up to the end of the viewed month
+                                    // FIX: limit used OFF strictly within VIEW month (not lifetime)
                                     $usedUpToMonth = DB::table('rosters')
                                         ->where('staff_id', $staff->id)
                                         ->where('shift_id', $offShiftId)
-                                        ->where('work_date', '<=', $rosterMonthDate->format('Y-m-d'))
+                                        ->whereBetween('work_date', [
+                                            $viewStart->format('Y-m-d'),
+                                            $viewEnd->format('Y-m-d')
+                                        ])
                                         ->count();
 
-                                    // 3. Inject/Override the "off_day" balance for this month's view
                                     $leaveBalances['off_day'] = [
-                                        'total' => (int)$accruedUpToMonth,
-                                        'used' => (int)$usedUpToMonth,
-                                        'remaining' => (int)($accruedUpToMonth - $usedUpToMonth),
+                                        'total' => (int) $accruedUpToMonth,
+                                        'used' => (int) $usedUpToMonth,
+                                        'remaining' => (int) ($accruedUpToMonth - $usedUpToMonth),
                                     ];
                                 }
 
