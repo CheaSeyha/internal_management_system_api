@@ -71,11 +71,11 @@ class AuthService
             $refreshToken,
             $rememberMeTtl,
             '/',
-            '.onrender.com',   // or null (see below)
-            true,              // secure MUST be true
+            'null',
+            true,            
             true,
             false,
-            'none'
+            'None'
         );
 
         $rememberMeCookie = cookie(
@@ -83,11 +83,11 @@ class AuthService
             !empty($credentials['remember_me']) ? '1' : '0',
             $rememberMeTtl,
             '/',
-            '.onrender.com',   // or null (see below)
-            true,              // secure MUST be true
+            'null',
+            true,            
             true,
             false,
-            'none'
+            'None'
         );
 
         return ResponseHelper::success('Login successful', $responseData, 200)
@@ -158,11 +158,11 @@ class AuthService
             $data['refresh_token'] ?? $refreshToken,
             $rememberMeTtl,
             '/',
-            '.onrender.com',   // or null (see below)
+            'null',
             true,              // secure MUST be true
             true,
             false,
-            'none'
+            'None'
         );
 
         $rememberMeCookie = cookie(
@@ -170,11 +170,11 @@ class AuthService
             $rememberMeValue === '1' ? '1' : '0',
             $rememberMeTtl,
             '/',
-            '.onrender.com',   // or null (see below)
+            'null',
             true,              // secure MUST be true
             true,
             false,
-            'none'
+            'None'
         );
 
         return $this->responseHelper->success('Token refreshed successfully', [

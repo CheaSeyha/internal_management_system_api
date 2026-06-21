@@ -29,7 +29,6 @@ RUN composer install \
     --optimize-autoloader \
     --no-interaction
 
-# 👉 ADD THIS (important)
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
