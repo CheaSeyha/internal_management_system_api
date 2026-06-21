@@ -39,19 +39,19 @@ class RosterService
         // Use the end of the specified roster month for calculation
         $rosterMonthDate = Carbon::create($year, $month, 1)->endOfMonth();
 
-        // Calculate total months since joining up to the target month
+        // Calculate total days for the specified month
         if ($joiningDate->greaterThan($rosterMonthDate)) {
             $totalAccruedDays = 0;
         } else {
-            $totalMonths = $joiningDate->diffInMonths($rosterMonthDate) + 1;
-            $totalAccruedDays = $totalMonths * 4;
+            $totalAccruedDays = 4;
         }
 
-        // 3. Count roster entries marked as OFF up to the target month (cumulative)
+        // 3. Count roster entries marked as OFF in the specified month
         $totalUsedOffDays = DB::table('rosters')
             ->where('staff_id', $staffId)
             ->where('shift_id', $offShiftId)
-            ->where('work_date', '<=', $rosterMonthDate->format('Y-m-d'))
+            ->whereYear('work_date', $year)
+            ->whereMonth('work_date', $month)
             ->count();
 
         // 4. Get the "OFF Day" leave type ID
@@ -300,7 +300,7 @@ class RosterService
                                     ];
                                 })->toArray();
 
-                                // --- DYNAMIC OFF DAY BALANCE CALCULATION (CUMULATIVE up to viewed month) ---
+                                // --- DYNAMIC OFF DAY BALANCE CALCULATION (for viewed month) ---
                                 $offShiftId = DB::table('shifts')->where('name', 'OFF')->value('id');
 
                                 $joiningDate = $staff->date_of_joining
@@ -313,24 +313,23 @@ class RosterService
                                 if ($joiningDate && $offShiftId) {
                                     // If joined after the viewed month, no accrual yet
                                     if ($joiningDate->greaterThan($viewEnd)) {
-                                        $accruedUpToMonth = 0;
+                                        $accruedInMonth = 0;
                                     } else {
-                                        // Total months since joining up to the end of viewed month (inclusive)
-                                        $totalMonths = $joiningDate->diffInMonths($viewEnd) + 1;
-                                        $accruedUpToMonth = max(0, $totalMonths * 4);
+                                        $accruedInMonth = 4;
                                     }
 
-                                    // Count OFF rosters up to the end of viewed month (cumulative usage)
-                                    $usedUpToMonth = DB::table('rosters')
+                                    // Count OFF rosters in the viewed month only
+                                    $usedInMonth = DB::table('rosters')
                                         ->where('staff_id', $staff->id)
                                         ->where('shift_id', $offShiftId)
-                                        ->where('work_date', '<=', $viewEnd->format('Y-m-d'))
+                                        ->whereYear('work_date', $year)
+                                        ->whereMonth('work_date', $month)
                                         ->count();
 
                                     $leaveBalances['off_day'] = [
-                                        'total' => (int) $accruedUpToMonth,
-                                        'used' => (int) $usedUpToMonth,
-                                        'remaining' => (int) ($accruedUpToMonth - $usedUpToMonth),
+                                        'total' => (int) $accruedInMonth,
+                                        'used' => (int) $usedInMonth,
+                                        'remaining' => (int) ($accruedInMonth - $usedInMonth),
                                     ];
                                 }
 
