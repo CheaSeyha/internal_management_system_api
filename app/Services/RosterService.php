@@ -185,7 +185,7 @@ class RosterService
                                 $staffRosters = $staff->rosters;
 
                                 // Determine days in month
-                                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
+                                $daysInMonth = now()->setYear($year)->setMonth($month)->daysInMonth;
                                 $rostersByDay = $staffRosters->keyBy(fn($r) => (int)$r->work_date->format('d'));
 
                                 $shiftData = [];
