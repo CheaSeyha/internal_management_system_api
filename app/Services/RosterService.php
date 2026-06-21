@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helper\ResponseHelper;
 use App\Repository\RosterRepository;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class RosterService
@@ -211,7 +212,7 @@ class RosterService
                                 $staffRosters = $staff->rosters;
 
                                 // Determine days in month
-                                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
+                                $daysInMonth = Carbon::create($year, $month, 1)->daysInMonth;
                                 $rostersByDay = $staffRosters->keyBy(fn($r) => (int)$r->work_date->format('d'));
 
                                 $shiftData = [];
