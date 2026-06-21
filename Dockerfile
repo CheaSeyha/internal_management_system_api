@@ -29,6 +29,6 @@ RUN composer install \
     --optimize-autoloader \
     --no-interaction
 
-EXPOSE 10000
+EXPOSE 
 
 CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]

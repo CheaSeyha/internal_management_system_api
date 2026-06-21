@@ -8,6 +8,7 @@ use App\Repository\AuthRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
 
 class AuthService
 {
@@ -29,11 +30,11 @@ class AuthService
 
         $checkAccountStatus = User::where('email', $credentials['email'])->first();
 
-        if ($checkAccountStatus->account_status !== 'active') {
+        if (!$checkAccountStatus || $checkAccountStatus->account_status !== 'active') {
             return $this->responseHelper->fail('Account is not active', null, 401);
         }
 
-        $response = Http::asForm()->post(env('APP_DEV_URL') . '/oauth/token', [
+        $tokenRequest = Request::create('/oauth/token', 'POST', [
             'grant_type'    => 'password',
             'client_id'     => env('CLIENT_ID'),
             'client_secret' => env('CLIENT_SECRET'),
@@ -42,30 +43,54 @@ class AuthService
             'scope'         => '',
         ]);
 
-        if ($response->failed()) {
+        $response = app()->handle($tokenRequest);
+        $data = json_decode($response->getContent(), true);
+
+        if (!isset($data['access_token'])) {
             return ResponseHelper::fail('Invalid credentials', null, 401);
         }
 
-        $accessToken  = $response->json('access_token');
-        $refreshToken = $response->json('refresh_token');
+        $accessToken  = $data['access_token'];
+        $refreshToken = $data['refresh_token'] ?? null;
 
         $user = User::where('email', $credentials['email'])
             ->select('id', 'name', 'email', 'staff_id', 'role_id')
             ->first();
 
-        $data = [
+        $responseData = [
             'user'         => $user,
             'access_token' => $accessToken,
-            'token_type'   => $response->json('token_type'),
-            'expires_in'   => $response->json('expires_in'),
+            'token_type'   => $data['token_type'] ?? 'Bearer',
+            'expires_in'   => $data['expires_in'] ?? null,
         ];
 
         $rememberMeTtl = !empty($credentials['remember_me']) ? 60 * 24 * 30 : 0;
 
-        $refreshTokenCookie = cookie('refresh_token', $refreshToken, $rememberMeTtl, '/', null, false, true, false, 'lax');
-        $rememberMeCookie   = cookie('remember_me', !empty($credentials['remember_me']) ? '1' : '0', $rememberMeTtl, '/', null, false, true, false, 'lax');
+        $refreshTokenCookie = cookie(
+            'refresh_token',
+            $refreshToken,
+            $rememberMeTtl,
+            '/',
+            '.onrender.com',   // or null (see below)
+            true,              // secure MUST be true
+            true,
+            false,
+            'none'
+        );
 
-        return ResponseHelper::success('Login successful', $data, 200)
+        $rememberMeCookie = cookie(
+            'remember_me',
+            !empty($credentials['remember_me']) ? '1' : '0',
+            $rememberMeTtl,
+            '/',
+            '.onrender.com',   // or null (see below)
+            true,              // secure MUST be true
+            true,
+            false,
+            'none'
+        );
+
+        return ResponseHelper::success('Login successful', $responseData, 200)
             ->withCookie($refreshTokenCookie)
             ->withCookie($rememberMeCookie);
     }
@@ -109,7 +134,8 @@ class AuthService
             return $this->responseHelper->fail('Refresh token not found', null, 401);
         }
 
-        $response = Http::asForm()->post(env('APP_DEV_URL') . '/oauth/token', [
+
+        $tokenRequest = Request::create('/oauth/token', 'POST', [
             'grant_type'    => 'refresh_token',
             'refresh_token' => $refreshToken,
             'client_id'     => env('CLIENT_ID'),
@@ -117,31 +143,45 @@ class AuthService
             'scope'         => '',
         ]);
 
-        if (isset($request->user()->email)) {
-            $checkAccountStatus = User::where('email', $request->user()->email)->first();
+        $response = app()->handle($tokenRequest);
+        $data = json_decode($response->getContent(), true);
 
-            if ($checkAccountStatus->account_status !== 'active') {
-                return $this->responseHelper->fail('Account is not active', null, 401);
-            }
-        }
-
-        if ($response->failed()) {
+        if (!isset($data['access_token'])) {
             return $this->responseHelper->fail('Invalid or expired refresh token', null, 401);
         }
-
-        $data = [
-            'access_token' => $response->json('access_token'),
-            'token_type'   => $response->json('token_type'),
-            'expires_in'   => $response->json('expires_in'),
-        ];
 
         $rememberMeValue = $request->cookie('remember_me');
         $rememberMeTtl   = $rememberMeValue === '1' ? 60 * 24 * 30 : 0;
 
-        $refreshTokenCookie = cookie('refresh_token', $response->json('refresh_token'), $rememberMeTtl, '/', null, false, true, false, 'lax');
-        $rememberMeCookie   = cookie('remember_me', $rememberMeValue === '1' ? '1' : '0', $rememberMeTtl, '/', null, false, true, false, 'lax');
+        $refreshTokenCookie = cookie(
+            'refresh_token',
+            $data['refresh_token'] ?? $refreshToken,
+            $rememberMeTtl,
+            '/',
+            '.onrender.com',   // or null (see below)
+            true,              // secure MUST be true
+            true,
+            false,
+            'none'
+        );
 
-        return ResponseHelper::success('Token refreshed successfully', $data, 200)
+        $rememberMeCookie = cookie(
+            'remember_me',
+            $rememberMeValue === '1' ? '1' : '0',
+            $rememberMeTtl,
+            '/',
+            '.onrender.com',   // or null (see below)
+            true,              // secure MUST be true
+            true,
+            false,
+            'none'
+        );
+
+        return $this->responseHelper->success('Token refreshed successfully', [
+            'access_token' => $data['access_token'],
+            'token_type'   => $data['token_type'] ?? 'Bearer',
+            'expires_in'   => $data['expires_in'] ?? null,
+        ], 200)
             ->withCookie($refreshTokenCookie)
             ->withCookie($rememberMeCookie);
     }
