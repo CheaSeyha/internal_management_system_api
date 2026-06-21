@@ -323,55 +323,55 @@ class RosterService
     /**
      * Synchronize the OFF day leave balance based on cumulative accrual and usage up to a specific month.
      */
-    private function syncOffDayBalance($staffId, $month, $year)
-    {
-        // 1. Get the "OFF" shift ID
-        $offShiftId = DB::table('shifts')->where('name', 'OFF')->value('id');
-        if (!$offShiftId) return;
+    // private function syncOffDayBalance($staffId, $month, $year)
+    // {
+    //     // 1. Get the "OFF" shift ID
+    //     $offShiftId = DB::table('shifts')->where('name', 'OFF')->value('id');
+    //     if (!$offShiftId) return;
 
-        // 2. Get Staff Joining Date to calculate total entitlement
-        $staff = DB::table('staff')->where('id', $staffId)->first();
-        if (!$staff || !$staff->date_of_joining) return;
+    //     // 2. Get Staff Joining Date to calculate total entitlement
+    //     $staff = DB::table('staff')->where('id', $staffId)->first();
+    //     if (!$staff || !$staff->date_of_joining) return;
 
-        $joiningDate = \Carbon\Carbon::parse($staff->date_of_joining);
+    //     $joiningDate = \Carbon\Carbon::parse($staff->date_of_joining);
 
-        // Use the end of the specified roster month for calculation
-        $rosterMonthDate = \Carbon\Carbon::create($year, $month, 1)->endOfMonth();
+    //     // Use the end of the specified roster month for calculation
+    //     $rosterMonthDate = \Carbon\Carbon::create($year, $month, 1)->endOfMonth();
 
-        // Calculate total months since joining up to the target month
-        if ($joiningDate->greaterThan($rosterMonthDate)) {
-            $totalAccruedDays = 0;
-        } else {
-            $totalMonths = $joiningDate->diffInMonths($rosterMonthDate) + 1;
-            $totalAccruedDays = $totalMonths * 4;
-        }
+    //     // Calculate total months since joining up to the target month
+    //     if ($joiningDate->greaterThan($rosterMonthDate)) {
+    //         $totalAccruedDays = 0;
+    //     } else {
+    //         $totalMonths = $joiningDate->diffInMonths($rosterMonthDate) + 1;
+    //         $totalAccruedDays = $totalMonths * 4;
+    //     }
 
-        // 3. Count roster entries marked as OFF up to the target month
-        $totalUsedOffDays = DB::table('rosters')
-            ->where('staff_id', $staffId)
-            ->where('shift_id', $offShiftId)
-            ->where('work_date', '<=', $rosterMonthDate->format('Y-m-d'))
-            ->count();
+    //     // 3. Count roster entries marked as OFF up to the target month
+    //     $totalUsedOffDays = DB::table('rosters')
+    //         ->where('staff_id', $staffId)
+    //         ->where('shift_id', $offShiftId)
+    //         ->where('work_date', '<=', $rosterMonthDate->format('Y-m-d'))
+    //         ->count();
 
-        // 4. Get the "OFF Day" leave type ID
-        $offLeaveTypeId = DB::table('leave_types')
-            ->where('name', 'LIKE', '%OFF%')
-            ->value('id');
+    //     // 4. Get the "OFF Day" leave type ID
+    //     $offLeaveTypeId = DB::table('leave_types')
+    //         ->where('name', 'LIKE', '%OFF%')
+    //         ->value('id');
 
-        if ($offLeaveTypeId) {
-            // 5. Update or Create the leave_balance record
-            DB::table('leave_balance')->updateOrInsert(
-                [
-                    'staff_id' => $staffId,
-                    'leave_type_id' => $offLeaveTypeId
-                ],
-                [
-                    'total_days' => $totalAccruedDays,
-                    'used_days' => $totalUsedOffDays,
-                    'updated_at' => now(),
-                    'created_at' => DB::raw('IFNULL(created_at, NOW())')
-                ]
-            );
-        }
-    }
+    //     if ($offLeaveTypeId) {
+    //         // 5. Update or Create the leave_balance record
+    //         DB::table('leave_balance')->updateOrInsert(
+    //             [
+    //                 'staff_id' => $staffId,
+    //                 'leave_type_id' => $offLeaveTypeId
+    //             ],
+    //             [
+    //                 'total_days' => $totalAccruedDays,
+    //                 'used_days' => $totalUsedOffDays,
+    //                 'updated_at' => now(),
+    //                 'created_at' => DB::raw('IFNULL(created_at, NOW())')
+    //             ]
+    //         );
+    //     }
+    // }
 }
