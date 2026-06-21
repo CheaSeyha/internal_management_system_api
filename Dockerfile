@@ -1,6 +1,5 @@
 FROM php:8.3-cli
 
-# System dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -17,26 +16,19 @@ RUN apt-get update && apt-get install -y \
     exif \
     pcntl
 
-# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copy composer files first
-COPY composer.json composer.lock ./
+# Copy entire project first
+COPY . .
 
+# Install dependencies
 RUN composer install \
     --no-dev \
     --optimize-autoloader \
     --no-interaction
 
-# Copy project
-COPY . .
-
-# Cache configs
-RUN php artisan config:clear || true
-RUN php artisan route:clear || true
-
 EXPOSE 10000
 
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
