@@ -20,7 +20,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copy entire project first
+# Copy project
 COPY . .
 
 # Install dependencies
@@ -29,6 +29,10 @@ RUN composer install \
     --optimize-autoloader \
     --no-interaction
 
+# 👉 ADD THIS (important)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 80
 
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-80}"]
+CMD ["/entrypoint.sh"]
